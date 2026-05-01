@@ -3,12 +3,14 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "js-yaml": "^4.1.1",
     "nlpp-grammar": "link:nlpp-grammar",
     "web-tree-sitter": "^0.25.0"
   }
