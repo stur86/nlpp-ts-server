@@ -67,7 +67,7 @@ const language = await initParser('/assets/tree-sitter-nlpp.wasm')
 
 ---
 
-## The `FileResolver` pattern
+## The file resolver pattern
 
 Functions that resolve cross-file symbols (`getCompletions`, `getHover`, `getDefinition`, `preprocess`) accept an optional `resolveFile` callback:
 
