@@ -212,6 +212,7 @@ Resolves the `define` statement or block declaration that defines the symbol und
 
 ```ts
 preprocess(
+  language: Language,
   entryText: string,
   entryPath: string,
   resolveFile: FileResolver

@@ -9,6 +9,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "nlpp-grammar": "link:nlpp-grammar"
+    "nlpp-grammar": "link:nlpp-grammar",
+    "web-tree-sitter": "^0.25.0"
   }
 }
