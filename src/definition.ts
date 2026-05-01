@@ -4,7 +4,7 @@ import { nodeAtPosition, nodeToRange, resolveImports } from './utils.ts'
 
 function findDefineNode(tree: Tree, name: string): SyntaxNode | null {
   for (const node of tree.rootNode.children) {
-    if (node.type === 'define_statement') {
+    if (node && node.type === 'define_statement') {
       if (node.childForFieldName('name')?.text === name) return node
     }
   }

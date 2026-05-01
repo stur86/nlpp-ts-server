@@ -35,8 +35,8 @@ export class ImportError extends Error {
 }
 
 export class CircularImportError extends Error {
-  constructor(public readonly importPath: string, public readonly stack: string[]) {
-    super(`Circular import detected: ${[...stack, importPath].join(' → ')}`)
+  constructor(public readonly importPath: string, public readonly importStack: string[]) {
+    super(`Circular import detected: ${[...importStack, importPath].join(' → ')}`)
     this.name = 'CircularImportError'
   }
 }

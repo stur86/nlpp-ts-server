@@ -3,18 +3,22 @@
   "version": "0.1.0",
   "description": "Language tooling for the NL++ pseudocode language — syntax highlighting, diagnostics, completions, hover, folding, go-to-definition, and preprocessing",
   "type": "module",
-  "module": "index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "files": [
-    "index.ts",
-    "src/**/*.ts",
+    "dist/",
     "data/keywords.yaml"
   ],
   "scripts": {
+    "build": "tsup",
     "test": "bun test",
-    "prepublishOnly": "bun test"
+    "prepublishOnly": "bun test && bun run build"
   },
   "repository": {
     "type": "git",
@@ -34,7 +38,8 @@
   ],
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/js-yaml": "^4.0.9"
+    "@types/js-yaml": "^4.0.9",
+    "tsup": "^8.5.1"
   },
   "peerDependencies": {
     "typescript": "^5"

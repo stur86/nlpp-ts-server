@@ -18,7 +18,7 @@ export function getFolding(tree: Tree): FoldingRange[] {
     } else if (node.type === 'body') {
       // Only fold bodies that span multiple lines and don't just contain prose blocks
       const hasNonProseChild = node.children.some(
-        c => c.type !== 'prose_block' && c.type !== '{' && c.type !== '}'
+        (c: SyntaxNode) => c.type !== 'prose_block' && c.type !== '{' && c.type !== '}'
       )
       if (hasNonProseChild) {
         ranges.push({ startLine, endLine, kind: 'region' })

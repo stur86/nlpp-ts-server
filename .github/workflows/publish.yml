@@ -1,0 +1,65 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout nlpp-ts-server
+        uses: actions/checkout@v4
+        with:
+          path: nlpp-ts-server
+
+      - name: Checkout nlpp-grammar
+        uses: actions/checkout@v4
+        with:
+          repository: stur86/nlpp-grammar
+          path: nlpp-grammar
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Set up Node for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install nlpp-grammar dependencies
+        working-directory: nlpp-grammar
+        run: bun install
+
+      - name: Build nlpp-grammar WASM
+        working-directory: nlpp-grammar
+        run: bunx tree-sitter build --wasm
+
+      - name: Register nlpp-grammar with bun link
+        working-directory: nlpp-grammar
+        run: bun link
+
+      - name: Install nlpp-ts-server dependencies
+        working-directory: nlpp-ts-server
+        run: bun install
+
+      - name: Link nlpp-grammar
+        working-directory: nlpp-ts-server
+        run: bun link nlpp-grammar
+
+      - name: Run tests
+        working-directory: nlpp-ts-server
+        run: bun test
+
+      - name: Build
+        working-directory: nlpp-ts-server
+        run: bun run build
+
+      - name: Publish to npm
+        working-directory: nlpp-ts-server
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
