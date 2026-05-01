@@ -27,6 +27,7 @@ function serializeStrippingComments(node: SyntaxNode, originalText: string): str
   return result
 }
 
+/** Thrown by {@link preprocess} when an imported file cannot be resolved. */
 export class ImportError extends Error {
   constructor(public readonly importPath: string, cause: unknown) {
     super(`Cannot resolve import "${importPath}": ${cause}`)
@@ -34,6 +35,10 @@ export class ImportError extends Error {
   }
 }
 
+/**
+ * Thrown by {@link preprocess} when a cycle is detected in the import graph.
+ * @internal
+ */
 export class CircularImportError extends Error {
   constructor(public readonly importPath: string, public readonly importStack: string[]) {
     super(`Circular import detected: ${[...importStack, importPath].join(' → ')}`)
@@ -56,6 +61,29 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   for (const child of node.children) collectUsedBuiltins(child, out)
 }
 
+/**
+ * Produce a single prompt-ready string from an entry NL++ file.
+ *
+ * Processing steps:
+ * 1. Resolves `import` statements recursively via `resolveFile`, deduplicating on path.
+ * 2. Strips `//` line comments and block comments.
+ * 3. Retains prose blocks (`/? … ?/`) and fill-in markers (`???`) verbatim.
+ * 4. Appends a `KEYWORD GLOSSARY` section listing every built-in keyword and
+ *    `define`d term that appears in the output, with their definitions.
+ *
+ * Unresolved custom block keywords (used but not `define`d) are reported as
+ * {@link PreprocessWarning} objects in the result rather than throwing.
+ *
+ * @param language - The `Language` object returned by {@link initParser}.
+ *   Required to parse imported files internally.
+ * @param entryText - The text content of the entry file.
+ * @param entryPath - The absolute path of the entry file, used to resolve
+ *   relative `import` paths.
+ * @param resolveFile - Async callback that receives an absolute path and
+ *   returns the file's text content.
+ * @throws {@link ImportError} if a file cannot be resolved.
+ * @throws `CircularImportError` if a cycle is detected in the import graph.
+ */
 export async function preprocess(
   language: Language,
   entryText: string,
@@ -79,6 +107,10 @@ export async function preprocess(
     let output = ''
 
     for (const node of tree.rootNode.children) {
+      if (!node) {
+        continue
+      }
+
       if (node.type === 'line_comment' || node.type === 'block_comment') {
         continue
       }

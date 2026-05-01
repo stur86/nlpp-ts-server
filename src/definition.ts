@@ -40,6 +40,23 @@ function resolveWordNode(node: SyntaxNode): SyntaxNode {
   return node
 }
 
+/**
+ * Resolve the definition site of the symbol at the cursor position.
+ *
+ * Searches in order: in-file `define` statements → in-file block declarations
+ * → cross-file definitions (requires `resolveFile`). Returns `null` if the
+ * cursor is on a built-in keyword, a declaration name itself, or an unknown
+ * symbol.
+ *
+ * The returned {@link Location} uses an empty string `uri` for in-file
+ * definitions and the resolved file path for cross-file definitions.
+ *
+ * @param language - The `Language` object returned by {@link initParser}.
+ * @param tree - The syntax tree returned by {@link parse}.
+ * @param position - Zero-based `{ line, character }` cursor position.
+ * @param resolveFile - Optional async callback that resolves an absolute file
+ *   path to its text content. Required for cross-file go-to-definition.
+ */
 export async function getDefinition(
   language: Language,
   tree: Tree,

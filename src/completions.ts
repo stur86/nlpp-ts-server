@@ -3,6 +3,22 @@ import { CompletionItemKind } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
 import { nodeAtPosition, isInsideNodeOfType, collectDefines, resolveImports } from './utils.ts'
 
+/**
+ * Return completion items appropriate for the cursor position.
+ *
+ * Always includes all built-in NL++ keywords (from the keyword registry) and
+ * any `define`d terms visible in the current file. Pass `resolveFile` to also
+ * surface terms defined in imported files.
+ *
+ * Returns an empty array when the cursor is inside a prose block (`/? … ?/`)
+ * or an `ERROR` node.
+ *
+ * @param language - The `Language` object returned by {@link initParser}.
+ * @param tree - The syntax tree returned by {@link parse}.
+ * @param position - Zero-based `{ line, character }` cursor position.
+ * @param resolveFile - Optional async callback that resolves an absolute file
+ *   path to its text content. Required for cross-file define completions.
+ */
 export async function getCompletions(
   language: Language,
   tree: Tree,

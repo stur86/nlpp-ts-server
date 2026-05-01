@@ -3,10 +3,14 @@ import { join } from 'node:path'
 import { load as parseYaml } from 'js-yaml'
 
 const raw = readFileSync(join(import.meta.dirname, '../data/keywords.yaml'), 'utf8')
+
+/** Map of every built-in NL++ keyword to its definition string. */
 export const KEYWORD_REGISTRY: Record<string, string> = parseYaml(raw) as Record<string, string>
 
+/** @internal */
 export const KEYWORD_NAMES = new Set(Object.keys(KEYWORD_REGISTRY))
 
+/** @internal */
 export const RESERVED_KEYWORDS = new Set([
   'import', 'define', 'uses', 'field',
   'public', 'private', 'override',

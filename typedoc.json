@@ -1,0 +1,9 @@
+{
+  "entryPoints": ["index.ts"],
+  "out": "docs/api",
+  "name": "nlpp-ts-server",
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "excludeReferences": true,
+  "readme": "README.md"
+}

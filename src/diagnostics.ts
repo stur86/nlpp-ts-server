@@ -2,6 +2,16 @@ import type { Language, Tree, SyntaxNode, Diagnostic } from './types.ts'
 import { DiagnosticSeverity } from './types.ts'
 import { nodeToRange } from './utils.ts'
 
+/**
+ * Walk a syntax tree and return all parse errors as {@link Diagnostic} objects.
+ *
+ * Reports `ERROR` nodes (unexpected tokens) and `MISSING` nodes (expected
+ * tokens that were absent) at {@link DiagnosticSeverity.Error} severity.
+ * Returns an empty array for a clean parse.
+ *
+ * @param _language - The `Language` object (reserved for future query-based diagnostics).
+ * @param tree - The syntax tree returned by {@link parse}.
+ */
 export function getDiagnostics(_language: Language, tree: Tree): Diagnostic[] {
   const diagnostics: Diagnostic[] = []
 

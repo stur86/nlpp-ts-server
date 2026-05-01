@@ -24,6 +24,19 @@ function keywordAtNode(node: SyntaxNode): string | null {
   return null
 }
 
+/**
+ * Return the hover documentation for the symbol at the cursor position.
+ *
+ * Resolves in order: built-in keyword definition → in-file `define` term →
+ * cross-file `define` term (requires `resolveFile`). Returns `null` if the
+ * cursor is not over a known keyword or defined term.
+ *
+ * @param language - The `Language` object returned by {@link initParser}.
+ * @param tree - The syntax tree returned by {@link parse}.
+ * @param position - Zero-based `{ line, character }` cursor position.
+ * @param resolveFile - Optional async callback that resolves an absolute file
+ *   path to its text content. Required for hover on cross-file defined terms.
+ */
 export async function getHover(
   language: Language,
   tree: Tree,

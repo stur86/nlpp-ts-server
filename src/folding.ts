@@ -1,5 +1,16 @@
 import type { Tree, SyntaxNode, FoldingRange } from './types.ts'
 
+/**
+ * Return all foldable regions in a syntax tree.
+ *
+ * Covers three kinds of foldable construct:
+ * - **`region`** — multi-line block bodies and prose blocks (`/? … ?/`)
+ * - **`comment`** — multi-line block comments
+ *
+ * Single-line constructs are never returned.
+ *
+ * @param tree - The syntax tree returned by {@link parse}.
+ */
 export function getFolding(tree: Tree): FoldingRange[] {
   const ranges: FoldingRange[] = []
 
