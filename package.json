@@ -19,7 +19,8 @@
     "build": "tsup",
     "test": "bun test",
     "prepublishOnly": "bun test && bun run build",
-    "demo": "bun scripts/demo.ts"
+    "demo": "bun scripts/demo.ts",
+    "docs": "typedoc"
   },
   "repository": {
     "type": "git",
@@ -40,7 +41,8 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.19"
   },
   "peerDependencies": {
     "typescript": "^5"

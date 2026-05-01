@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @document ./docs/introduction.md
+ */
+
 export { initParser, parse } from './src/parser.ts'
 export { getDiagnostics } from './src/diagnostics.ts'
 export { getHighlights } from './src/highlights.ts'
