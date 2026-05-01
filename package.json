@@ -1,7 +1,37 @@
 {
   "name": "nlpp-ts-server",
-  "module": "index.ts",
+  "version": "0.1.0",
+  "description": "Language tooling for the NL++ pseudocode language — syntax highlighting, diagnostics, completions, hover, folding, go-to-definition, and preprocessing",
   "type": "module",
+  "module": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "files": [
+    "index.ts",
+    "src/**/*.ts",
+    "data/keywords.yaml"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "prepublishOnly": "bun test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stur86/nlpp-ts-server.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Simone Sturniolo",
+    "email": "simonesturniolo@gmail.com"
+  },
+  "keywords": [
+    "nlpp",
+    "tree-sitter",
+    "language-server",
+    "syntax-highlighting",
+    "pseudocode"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9"
