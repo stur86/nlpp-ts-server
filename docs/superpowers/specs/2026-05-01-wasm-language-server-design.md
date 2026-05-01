@@ -222,8 +222,8 @@ Produces a single prompt-ready string from an entry NL++ file:
 
 1. Resolves `import` statements recursively via `resolveFile`. Deduplicates on canonical path. Inlines file contents at the import site.
 2. Strips `line_comment` (`//`) and `block_comment` (`/* … */`) nodes.
-3. Retains prose blocks (`/? … ?/`) — removes delimiters, emits content verbatim.
-4. Collects all built-in keywords, `define`d terms, and `???` markers present in the result.
+3. Retains prose blocks (`/? … ?/` and `???`) as is.
+4. Collects all built-in keywords and `define`d terms present in the result.
 5. Appends a `KEYWORD GLOSSARY` section containing only the collected terms, using definitions from the built-in registry and from `define` statements in the file.
 
 Throws `ImportError` (unresolvable path or rejected resolver promise) and `CircularImportError`. Emits unresolved custom block keyword warnings as part of the return value rather than throwing:

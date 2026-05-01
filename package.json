@@ -1,0 +1,14 @@
+{
+  "name": "nlpp-ts-server",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "nlpp-grammar": "link:nlpp-grammar"
+  }
+}
