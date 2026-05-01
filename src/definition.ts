@@ -56,6 +56,8 @@ function resolveWordNode(node: SyntaxNode): SyntaxNode {
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for cross-file go-to-definition.
+ * 
+ * @category Core API
  */
 export async function getDefinition(
   language: Language,

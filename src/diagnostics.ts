@@ -11,6 +11,8 @@ import { nodeToRange } from './utils.ts'
  *
  * @param _language - The `Language` object (reserved for future query-based diagnostics).
  * @param tree - The syntax tree returned by {@link parse}.
+ * 
+ * @category Core API
  */
 export function getDiagnostics(_language: Language, tree: Tree): Diagnostic[] {
   const diagnostics: Diagnostic[] = []

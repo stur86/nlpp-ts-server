@@ -36,6 +36,8 @@ function keywordAtNode(node: SyntaxNode): string | null {
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for hover on cross-file defined terms.
+ * 
+ * @category Core API
  */
 export async function getHover(
   language: Language,

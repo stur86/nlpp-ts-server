@@ -54,6 +54,7 @@ export async function resolveImports(
 ): Promise<Map<string, Tree>> {
   const result = new Map<string, Tree>()
   for (const node of tree.rootNode.children) {
+    if (!node) continue
     if (node.type !== 'import_statement') continue
     const importedPath = extractImportPath(node, currentPath)
     if (visited.has(importedPath)) continue

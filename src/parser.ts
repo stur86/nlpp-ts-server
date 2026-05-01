@@ -16,6 +16,8 @@ export type { Language, Tree, SyntaxNode } from './types.ts'
  *   Pass a URL or path string in browser/bundler contexts where the WASM asset
  *   is served from a known URL.
  * @throws If the WASM file cannot be located or fails to load.
+ * 
+ * @category Core API
  */
 export async function initParser(wasmUrl?: string | URL): Promise<Language> {
   await Parser.init()
@@ -39,6 +41,8 @@ export async function initParser(wasmUrl?: string | URL): Promise<Language> {
  *
  * @param language - The `Language` object returned by {@link initParser}.
  * @param text - Full document text.
+ * 
+ * @category Core API
  */
 export function parse(language: Language, text: string): Tree {
   const parser = new Parser()

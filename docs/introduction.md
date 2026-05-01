@@ -1,3 +1,7 @@
+---
+title: Introduction
+---
+
 # nlpp-ts-server
 
 `nlpp-ts-server` is a TypeScript library providing language tooling for [NL++](https://github.com/stur86/nlpp-grammar) — a pseudocode language for expressing software architecture and implementation intent to AI coding agents.
@@ -51,15 +55,15 @@ const language = await initParser('/assets/tree-sitter-nlpp.wasm')
 
 | Function | Returns | Description |
 |---|---|---|
-| [`initParser`](functions/initParser.html) | `Promise<Language>` | Load the WASM grammar. Call once. |
-| [`parse`](functions/parse.html) | `Tree` | Parse a document. Never throws. |
-| [`getDiagnostics`](functions/getDiagnostics.html) | `Diagnostic[]` | Syntax errors from the tree. |
-| [`getHighlights`](functions/getHighlights.html) | `HighlightRange[]` | Token scopes for syntax colouring. |
-| [`getFolding`](functions/getFolding.html) | `FoldingRange[]` | Foldable block and comment regions. |
-| [`getCompletions`](functions/getCompletions.html) | `Promise<CompletionItem[]>` | Keyword and define completions. |
-| [`getHover`](functions/getHover.html) | `Promise<HoverResult \| null>` | Definition of the symbol at the cursor. |
-| [`getDefinition`](functions/getDefinition.html) | `Promise<Location \| null>` | Jump-to-definition for symbols. |
-| [`preprocess`](functions/preprocess.html) | `Promise<PreprocessResult>` | Produce a prompt-ready string. |
+| {@link initParser} | `Promise<Language>` | Load the WASM grammar. Call once. |
+| {@link parse} | `Tree` | Parse a document. Never throws. |
+| {@link getDiagnostics} | `Diagnostic[]` | Syntax errors from the tree. |
+| {@link getHighlights} | `HighlightRange[]` | Token scopes for syntax colouring. |
+| {@link getFolding} | `FoldingRange[]` | Foldable block and comment regions. |
+| {@link getCompletions} | `Promise<CompletionItem[]>` | Keyword and define completions. |
+| {@link getHover} | `Promise<HoverResult \| null>` | Definition of the symbol at the cursor. |
+| {@link getDefinition} | `Promise<Location \| null>` | Jump-to-definition for symbols. |
+| {@link preprocess} | `Promise<PreprocessResult>` | Produce a prompt-ready string. |
 
 ---
 

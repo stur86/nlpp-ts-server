@@ -18,6 +18,8 @@ import { nodeAtPosition, isInsideNodeOfType, collectDefines, resolveImports } fr
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for cross-file define completions.
+ * 
+ * @category Core API
  */
 export async function getCompletions(
   language: Language,

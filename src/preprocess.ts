@@ -83,6 +83,8 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
  *   returns the file's text content.
  * @throws {@link ImportError} if a file cannot be resolved.
  * @throws `CircularImportError` if a cycle is detected in the import graph.
+ * 
+ * @category Core API
  */
 export async function preprocess(
   language: Language,

@@ -5,5 +5,9 @@
   "excludeInternal": true,
   "excludeExternals": true,
   "excludeReferences": true,
-  "readme": "README.md"
+  "readme": "README.md",
+  "navigation": {
+    "includeCategories": true
+  },
+  "projectDocuments": ["docs/introduction.md"]
 }

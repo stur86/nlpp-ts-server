@@ -10,6 +10,8 @@ import type { Tree, SyntaxNode, FoldingRange } from './types.ts'
  * Single-line constructs are never returned.
  *
  * @param tree - The syntax tree returned by {@link parse}.
+ * 
+ * @category Core API
  */
 export function getFolding(tree: Tree): FoldingRange[] {
   const ranges: FoldingRange[] = []

@@ -11,6 +11,8 @@ import { HIGHLIGHTS_QUERY } from './queries.ts'
  *
  * @param language - The `Language` object returned by {@link initParser}.
  * @param tree - The syntax tree returned by {@link parse}.
+ * 
+ * @category Core API
  */
 export function getHighlights(language: Language, tree: Tree): HighlightRange[] {
   const query = new Query(language, HIGHLIGHTS_QUERY)

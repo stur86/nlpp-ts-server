@@ -1,7 +1,15 @@
 /**
  * @packageDocumentation
- * @document ./docs/introduction.md
  */
+
+/**
+ * @categoryDescription Core API
+ * These functions provide the core API for parsing and analyzing NL++ code. They are the ones
+ * you should use in most cases when working with NL++ documents.
+ * @showCategories
+ * @module
+ */
+
 
 export { initParser, parse } from './src/parser.ts'
 export { getDiagnostics } from './src/diagnostics.ts'
