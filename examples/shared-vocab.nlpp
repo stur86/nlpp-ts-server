@@ -1,0 +1,7 @@
+// Shared domain vocabulary — import this file to use these terms as block keywords
+
+define aggregate "A DDD aggregate root. Enforces all invariants internally. All mutations go through the aggregate's methods. Never expose raw internal state."
+define saga "A long-running process coordinator that spans multiple bounded contexts. Implements compensating transactions on failure."
+define value_object "An immutable value identified by its attributes, not an identity. Equality is structural."
+define domain_event "An immutable record of something that happened in the domain. Named in past tense."
+define repository "A persistence abstraction over an aggregate. The caller sees a collection; storage details are hidden."

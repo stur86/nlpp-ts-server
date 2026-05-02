@@ -1,14 +1,55 @@
 {
   "name": "nlpp-ts-server",
-  "module": "index.ts",
+  "version": "0.1.0",
+  "description": "Language tooling for the NL++ pseudocode language — syntax highlighting, diagnostics, completions, hover, folding, go-to-definition, and preprocessing",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "data/keywords.yaml"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "bun test",
+    "prepublishOnly": "bun test && bun run build",
+    "demo": "bun scripts/demo.ts",
+    "docs": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stur86/nlpp-ts-server.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Simone Sturniolo",
+    "email": "simonesturniolo@gmail.com"
+  },
+  "keywords": [
+    "nlpp",
+    "tree-sitter",
+    "language-server",
+    "syntax-highlighting",
+    "pseudocode"
+  ],
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.19"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "nlpp-grammar": "link:nlpp-grammar"
+    "js-yaml": "^4.1.1",
+    "nlpp-grammar": "link:nlpp-grammar",
+    "web-tree-sitter": "^0.25.0"
   }
 }

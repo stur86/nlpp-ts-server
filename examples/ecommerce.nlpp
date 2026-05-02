@@ -1,0 +1,138 @@
+import "./shared-vocab.nlpp"
+
+/?
+  E-commerce order management domain.
+  Models the core lifecycle from cart to fulfilment.
+  Payment and notification are external ports — define interfaces, not implementations.
+?/
+
+// ── Enums ──────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  field auto pending
+  field auto confirmed
+  field auto shipped
+  field auto delivered
+  field auto cancelled
+}
+
+// ── Value objects ──────────────────────────────────────────────────────────
+
+value_object Money {
+  field int amount_cents
+  field string currency_code
+}
+
+value_object ShippingAddress {
+  field string street
+  field string city
+  field string postcode
+  field string country_code
+}
+
+// ── Domain events ──────────────────────────────────────────────────────────
+
+domain_event OrderPlaced {
+  field auto order_id
+  field auto customer_id
+  field Money total
+}
+
+domain_event OrderCancelled {
+  field auto order_id
+  field string reason
+}
+
+// ── Aggregates ─────────────────────────────────────────────────────────────
+
+aggregate Order {
+  /?
+    Central aggregate for the order lifecycle.
+    All state transitions must validate business rules before mutating state.
+    Never allow OrderStatus to regress — shipped → pending is forbidden.
+  ?/
+
+  field auto id
+  field auto customer_id
+  field OrderStatus status
+  field Money total
+  field ShippingAddress shipping_address
+
+  method auto place(auto customer, auto items) {
+    uses PaymentPort.authorise
+    ??? validate stock availability before authorising payment
+  }
+
+  method auto cancel(string reason) {
+    ??? only allowed when status is pending or confirmed
+  }
+
+  method auto ship(auto tracking_number) {
+    ??? transition status to shipped, emit OrderShipped event
+  }
+}
+
+// ── Interfaces (ports) ─────────────────────────────────────────────────────
+
+interface PaymentPort {
+  method auto authorise(Money amount, auto payment_method) {}
+  method auto refund(auto payment_reference, Money amount) {}
+}
+
+interface NotificationPort {
+  method auto send_order_confirmation(auto order_id, auto customer_email) {}
+  method auto send_shipping_update(auto order_id, string tracking_number) {}
+}
+
+// ── Repositories ───────────────────────────────────────────────────────────
+
+repository OrderRepository {
+  method auto find_by_id(auto id) {}
+  method auto save(Order order) {}
+}
+
+// ── Application service ────────────────────────────────────────────────────
+
+service OrderService {
+  /?
+    Application service orchestrating the order placement flow.
+    Primary entry point for the presentation layer.
+    Does not contain domain logic — delegates to the Order aggregate.
+  ?/
+
+  uses Order
+  uses OrderRepository
+  uses PaymentPort
+  uses NotificationPort
+
+  method auto place_order(auto customer_id, auto cart) {
+    /?
+      1. Load the customer
+      2. Build an Order aggregate from the cart
+      3. Call Order.place() — this authorises payment
+      4. Persist via OrderRepository
+      5. Notify the customer via NotificationPort
+    ?/
+    ??? handle payment failure with a compensating cancellation
+  }
+
+  method auto cancel_order(auto order_id, string reason) {
+    uses Order.cancel
+    uses OrderRepository.save
+    ??? emit OrderCancelled domain event after successful cancellation
+  }
+}
+
+// ── Saga ───────────────────────────────────────────────────────────────────
+
+saga FulfilmentSaga {
+  /?
+    Coordinates order fulfilment across warehouse and shipping contexts.
+    Triggered by OrderPlaced. On warehouse failure, issues compensating cancellation.
+  ?/
+
+  uses OrderService
+  uses NotificationPort
+
+  ??? implement compensating transaction if warehouse reservation fails
+}
