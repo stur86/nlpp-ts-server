@@ -1,7 +1,25 @@
 import { Parser, Language as WtsLanguage } from 'web-tree-sitter'
-import type { Language, Tree } from './types.ts'
+import type { Language, Tree, Position, Edit } from './types.ts'
 
 export type { Language, Tree, SyntaxNode } from './types.ts'
+
+function charOffsetAt(text: string, position: Position): number {
+  let offset = 0
+  for (let i = 0; i < position.line; i++) {
+    const nl = text.indexOf('\n', offset)
+    if (nl === -1) return text.length
+    offset = nl + 1
+  }
+  return offset + position.character
+}
+
+function computeNewEndPosition(startPosition: Position, newText: string): Position {
+  const lines = newText.split('\n')
+  if (lines.length === 1) {
+    return { line: startPosition.line, character: startPosition.character + newText.length }
+  }
+  return { line: startPosition.line + lines.length - 1, character: lines[lines.length - 1].length }
+}
 
 /**
  * Initialise the web-tree-sitter runtime and load the NL++ WASM grammar.
@@ -37,8 +55,6 @@ export async function initParser(wasmUrl?: string | URL): Promise<Language> {
  * Syntax errors are represented as `ERROR` and `MISSING` nodes in the tree,
  * which {@link getDiagnostics} converts to {@link Diagnostic} objects.
  *
- * Re-parse on every document change; incremental parsing is not yet supported.
- *
  * @param language - The `Language` object returned by {@link initParser}.
  * @param text - Full document text.
  * 
@@ -48,4 +64,53 @@ export function parse(language: Language, text: string): Tree {
   const parser = new Parser()
   parser.setLanguage(language)
   return parser.parse(text) as Tree
+}
+
+/**
+ * Parse a NL++ document incrementally, reusing unchanged parts of a previous tree.
+ *
+ * Prefer this over {@link parse} in editor/LSP contexts where the same document
+ * is updated repeatedly. Pass the tree returned by the previous `parse` or
+ * `parseIncremental` call together with the edit that produced `newText`.
+ *
+ * For batches of edits (multi-cursor, find-replace), call this function once
+ * per edit in sequence, threading `newText`/returned tree into the next call.
+ *
+ * The `edit` type is structurally compatible with LSP `TextDocumentContentChangeEvent`
+ * so LSP change events can be passed directly.
+ *
+ * @param language - The `Language` object returned by {@link initParser}.
+ * @param oldText - Full document text before the edit.
+ * @param newText - Full document text after the edit.
+ * @param oldTree - The syntax tree for `oldText`.
+ * @param edit - The content change that transforms `oldText` into `newText`.
+ *
+ * @category Core API
+ */
+export function parseIncremental(
+  language: Language,
+  oldText: string,
+  newText: string,
+  oldTree: Tree,
+  edit: Edit,
+): Tree {
+  const tree = oldTree.copy()
+
+  const startIndex = charOffsetAt(oldText, edit.range.start)
+  const oldEndIndex = charOffsetAt(oldText, edit.range.end)
+  const newEndIndex = startIndex + edit.text.length
+  const newEndPosition = computeNewEndPosition(edit.range.start, edit.text)
+
+  tree.edit({
+    startIndex,
+    oldEndIndex,
+    newEndIndex,
+    startPosition: { row: edit.range.start.line, column: edit.range.start.character },
+    oldEndPosition: { row: edit.range.end.line, column: edit.range.end.character },
+    newEndPosition: { row: newEndPosition.line, column: newEndPosition.character },
+  })
+
+  const parser = new Parser()
+  parser.setLanguage(language)
+  return parser.parse(newText, tree) as Tree
 }

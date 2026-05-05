@@ -62,6 +62,7 @@ test('parseIncremental: no-op edit matches full parse', () => {
   const result = parseIncremental(language, text, text, tree, edit)
   expect(result.rootNode.type).toBe('source_file')
   expect(result.rootNode.childCount).toBe(tree.rootNode.childCount)
+  expect(result.rootNode.text).toBe(text)
 })
 
 test('parseIncremental: stale oldText does not throw', () => {
