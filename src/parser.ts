@@ -18,7 +18,8 @@ function computeNewEndPosition(startPosition: Position, newText: string): Positi
   if (lines.length === 1) {
     return { line: startPosition.line, character: startPosition.character + newText.length }
   }
-  return { line: startPosition.line + lines.length - 1, character: lines[lines.length - 1].length }
+  const lastLine = lines.at(-1) ?? ''
+  return { line: startPosition.line + lines.length - 1, character: lastLine.length }
 }
 
 /**
