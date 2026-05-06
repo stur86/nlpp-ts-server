@@ -13,6 +13,8 @@ export type Range = {
   end: Position
 }
 
+export type Edit = { range: Range; text: string }
+
 export type HighlightRange = {
   startIndex: number
   endIndex: number

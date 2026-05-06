@@ -11,7 +11,7 @@
  */
 
 
-export { initParser, parse } from './src/parser.ts'
+export { initParser, parse, parseIncremental } from './src/parser.ts'
 export { getDiagnostics } from './src/diagnostics.ts'
 export { getHighlights } from './src/highlights.ts'
 export { getFolding } from './src/folding.ts'
@@ -26,6 +26,7 @@ export type {
   FileResolver,
   Position,
   Range,
+  Edit,
   HighlightRange,
   Diagnostic,
   CompletionItem,
