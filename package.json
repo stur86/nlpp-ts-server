@@ -16,7 +16,7 @@
     "data/keywords.yaml"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "bun run scripts/codegen.ts && tsup",
     "test": "bun test",
     "prepublishOnly": "bun test && bun run build",
     "demo": "bun scripts/demo.ts",

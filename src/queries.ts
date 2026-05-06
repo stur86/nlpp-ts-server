@@ -1,5 +1,5 @@
-export const HIGHLIGHTS_QUERY = `
-; ── Comments ──────────────────────────────────────────────────────────────────
+// AUTO-GENERATED from nlpp-grammar/queries/highlights.scm — do not edit by hand
+export const HIGHLIGHTS_QUERY = `; ── Comments ──────────────────────────────────────────────────────────────────
 (line_comment) @comment.line
 (block_comment) @comment.block
 
@@ -24,13 +24,13 @@ export const HIGHLIGHTS_QUERY = `
 (string) @string
 
 ; ── Prose blocks ──────────────────────────────────────────────────────────────
-"/?" @punctuation.special
-"?/" @punctuation.special
+"/?" @string.special
+"?/" @string.special
 (prose_text) @string.special
 
 ; ── Fill-in markers ───────────────────────────────────────────────────────────
-"???" @punctuation.special
-(hint_text) @comment.line
+"???" @string.special
+(hint_text) @string.special
 
 ; ── Named definitions ─────────────────────────────────────────────────────────
 (define_statement name: (identifier) @constant)
