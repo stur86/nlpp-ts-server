@@ -73,6 +73,12 @@ export type PreprocessWarning = {
   range: Range
 }
 
+export type PreprocessOptions = {
+  /** When true, append every built-in keyword and every defined term to the
+   *  glossary regardless of whether they appear in the output. */
+  fullGlossary?: boolean
+}
+
 export type PreprocessResult = {
   output: string
   warnings: PreprocessWarning[]

@@ -91,6 +91,11 @@ test('retains fill-in markers as-is', async () => {
   expect(result.output).toContain('add a method here')
 })
 
+test('glossary includes ??? when fill-in markers are used', async () => {
+  const result = await preprocess(language, WITH_FILLIN, '/entry.nlpp', noopResolver)
+  expect(result.output).toContain('???:')
+})
+
 test('appends keyword glossary', async () => {
   const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver)
   expect(result.output).toContain('KEYWORD GLOSSARY')
@@ -137,6 +142,21 @@ test('throws ImportError for unresolvable import path', async () => {
   const src = `import "./missing.nlpp"\nclass Foo {}\n`
   const failingResolver = async () => { throw new Error('ENOENT') }
   await expect(preprocess(language, src, '/entry.nlpp', failingResolver)).rejects.toBeInstanceOf(ImportError)
+})
+
+test('fullGlossary option includes all built-in keywords regardless of usage', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver, { fullGlossary: true })
+  // SIMPLE only uses 'class' and 'field', but all keywords should appear
+  expect(result.output).toContain('function:')
+  expect(result.output).toContain('method:')
+  expect(result.output).toContain('layer:')
+  expect(result.output).toContain('???:')
+})
+
+test('fullGlossary option includes defined terms from the file', async () => {
+  const result = await preprocess(language, WITH_DEFINE, '/entry.nlpp', noopResolver, { fullGlossary: true })
+  expect(result.output).toContain('aggregate:')
+  expect(result.output).toContain('DDD aggregate root')
 })
 
 test('throws CircularImportError for circular imports', async () => {

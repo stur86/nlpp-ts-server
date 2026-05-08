@@ -20,3 +20,4 @@ private: "This member is internal to its parent. Apply the target language's app
 override: "This member overrides an inherited implementation from a parent type. Apply the target language's appropriate override construct."
 define: "Author-defined architectural vocabulary. Treat defined terms as first-class design concepts throughout the implementation."
 import: "The contents of the referenced file have been inlined here. Treat it as part of this file."
+"???": "An explicit fill-in marker — the inline prose form. The author is intentionally leaving this area open. Expand it with reasonable implementation detail based on surrounding context. Free-form hint text may follow on the same line."

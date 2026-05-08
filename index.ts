@@ -34,6 +34,7 @@ export type {
   FoldingRange,
   Location,
   PreprocessWarning,
+  PreprocessOptions,
   PreprocessResult,
 } from './src/types.ts'
 export { DiagnosticSeverity, CompletionItemKind } from './src/types.ts'

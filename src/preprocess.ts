@@ -1,4 +1,4 @@
-import type { Language, FileResolver, PreprocessResult, PreprocessWarning, SyntaxNode } from './types.ts'
+import type { Language, FileResolver, PreprocessOptions, PreprocessResult, PreprocessWarning, SyntaxNode } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
 import { nodeToRange, extractImportPath } from './utils.ts'
 import { parse } from './parser.ts'
@@ -54,6 +54,7 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   else if (node.type === 'define_statement') out.add('define')
   else if (node.type === 'uses_statement') out.add('uses')
   else if (node.type === 'field_statement') out.add('field')
+  else if (node.type === 'fill_in') out.add('???')
   if (node.text === 'override') out.add('override')
   if (node.text === 'inherits') out.add('inherits')
   if (node.text === 'implements') out.add('implements')
@@ -91,6 +92,7 @@ export async function preprocess(
   entryText: string,
   entryPath: string,
   resolveFile: FileResolver,
+  options?: PreprocessOptions,
 ): Promise<PreprocessResult> {
   const visited = new Set<string>()
   const warnings: PreprocessWarning[] = []
@@ -158,17 +160,22 @@ export async function preprocess(
 
   const content = await processFile(entryText, entryPath, [])
 
-  // Build glossary — skip 'import' since import statements are stripped from output
-  const glossaryLines: string[] = []
-  for (const kw of usedBuiltins) {
-    if (kw === 'import') continue
-    const def = KEYWORD_REGISTRY[kw]
-    if (def) glossaryLines.push(`${kw}: ${def}`)
-  }
-  for (const term of usedDefinedTerms) {
-    const def = definedTerms.get(term)
-    if (def) glossaryLines.push(`${term}: ${def}`)
-  }
+  // Gather terms for glossary — 'import' is excluded since its statements are stripped
+  const builtinsToInclude = options?.fullGlossary
+    ? Object.keys(KEYWORD_REGISTRY).filter(kw => kw !== 'import')
+    : [...usedBuiltins].filter(kw => kw !== 'import')
+  const definedToInclude = options?.fullGlossary ? [...definedTerms.keys()] : [...usedDefinedTerms]
+
+  const glossaryLines: string[] = [
+    ...builtinsToInclude.flatMap(kw => {
+      const def = KEYWORD_REGISTRY[kw]
+      return def ? [`${kw}: ${def}`] : []
+    }),
+    ...definedToInclude.flatMap(term => {
+      const def = definedTerms.get(term)
+      return def ? [`${term}: ${def}`] : []
+    }),
+  ]
 
   const glossary = glossaryLines.length > 0
     ? [
