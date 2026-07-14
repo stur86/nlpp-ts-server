@@ -3,8 +3,12 @@ node_modules
 
 # output
 out
-dist
 *.tgz
+
+# dist/ IS committed: it is portable JS build output, and bun blocks a git
+# dependency's `prepare` script by default — committing dist/ makes the package
+# usable straight from a git install with no build step or trust prompt. The
+# `prepare`/`build` scripts still regenerate it for local dev and npm publish.
 
 # code coverage
 coverage
