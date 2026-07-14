@@ -6,7 +6,7 @@
       "name": "nlpp-ts-server",
       "dependencies": {
         "js-yaml": "^4.1.1",
-        "nlpp-grammar": "git+ssh://git@github.com/stur86/nlpp-grammar.git#main",
+        "nlpp-grammar": "git+https://github.com/stur86/nlpp-grammar.git#main",
         "web-tree-sitter": "^0.25.0",
       },
       "devDependencies": {
@@ -219,7 +219,7 @@
 
     "mz": ["mz@2.7.0", "", { "dependencies": { "any-promise": "^1.0.0", "object-assign": "^4.0.1", "thenify-all": "^1.0.0" } }, "sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q=="],
 
-    "nlpp-grammar": ["nlpp-grammar@git+ssh://git@github.com/stur86/nlpp-grammar.git#a2081fdc6713ce700ec3f9b9bf221d9f90a160d0", { "dependencies": { "node-addon-api": "^8.5.0", "node-gyp-build": "^4.8.4" }, "peerDependencies": { "tree-sitter": "^0.25.0" }, "optionalPeers": ["tree-sitter"] }, "a2081fdc6713ce700ec3f9b9bf221d9f90a160d0"],
+    "nlpp-grammar": ["nlpp-grammar@github:stur86/nlpp-grammar#a2081fd", { "dependencies": { "node-addon-api": "^8.5.0", "node-gyp-build": "^4.8.4" }, "peerDependencies": { "tree-sitter": "^0.25.0" }, "optionalPeers": ["tree-sitter"] }, "stur86-nlpp-grammar-a2081fd", "sha512-Dq53ITOPdkEhjfZEUQrxUdmuEdw48tTMHhaKIWea0p2YIr86dQIB0Ak3N+LCXMfCqFPrZ1gFB6Zc6oYIxC1Mzw=="],
 
     "node-addon-api": ["node-addon-api@8.9.0", "", {}, "sha512-ekZMeaaIzSQTSpr7X2X3iJM7lTzgnx8ahAG9pJfT/7+14mlEM8ZYQ9cgCDvSSRbReFK0oHli3WrZdCiRsgAT9Q=="],
 
