@@ -1,10 +1,13 @@
 {
   "name": "nlpp-ts-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Language tooling for the NL++ pseudocode language — syntax highlighting, diagnostics, completions, hover, folding, go-to-definition, and preprocessing",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "nlpp-compile": "./dist/src/cli.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -17,6 +20,7 @@
   ],
   "scripts": {
     "build": "bun run scripts/codegen.ts && tsup",
+    "prepare": "bun run build",
     "test": "bun test",
     "prepublishOnly": "bun test && bun run build",
     "demo": "bun scripts/demo.ts",
@@ -49,7 +53,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.1",
-    "nlpp-grammar": "link:nlpp-grammar",
+    "nlpp-grammar": "git+ssh://git@github.com/stur86/nlpp-grammar.git#v1.0.1",
     "web-tree-sitter": "^0.25.0"
   }
 }
