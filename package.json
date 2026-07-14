@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "bun run scripts/codegen.ts && tsup",
-    "prepare": "bun run build",
+    "prepare": "bun run scripts/codegen.ts && bun build index.ts src/cli.ts --outdir dist --target node --format esm --external web-tree-sitter --external nlpp-grammar --external js-yaml",
     "test": "bun test",
     "prepublishOnly": "bun test && bun run build",
     "demo": "bun scripts/demo.ts",
