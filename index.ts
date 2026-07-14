@@ -35,6 +35,7 @@ export type {
   Location,
   PreprocessWarning,
   PreprocessResult,
+  PreprocessOptions,
 } from './src/types.ts'
 export { DiagnosticSeverity, CompletionItemKind } from './src/types.ts'
 export { KEYWORD_REGISTRY, KEYWORD_NAMES, RESERVED_KEYWORDS } from './src/keywords.ts'

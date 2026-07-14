@@ -10,6 +10,7 @@
  * Usage:
  *   nlpp-compile <entry.nlpp>
  *   nlpp-compile <entry.nlpp> > prompt.txt
+ *   nlpp-compile --no-preamble <entry.nlpp>   # omit the NL++ SPECIFICATION preamble
  */
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -18,13 +19,16 @@ import { preprocess } from './preprocess.ts'
 import type { FileResolver } from './types.ts'
 
 async function main(argv: string[]): Promise<number> {
-  const args = argv.filter(a => a !== '--')
+  const rest = argv.filter(a => a !== '--')
+  const preamble = !rest.includes('--no-preamble')
+  const args = rest.filter(a => a !== '--no-preamble')
   const file = args[0]
   if (!file || file === '-h' || file === '--help') {
     const stream = file ? process.stdout : process.stderr
-    stream.write('Usage: nlpp-compile <entry.nlpp>\n\n')
+    stream.write('Usage: nlpp-compile [--no-preamble] <entry.nlpp>\n\n')
     stream.write('Resolves imports, strips comments, and appends the keyword glossary,\n')
-    stream.write('printing the prompt-ready output to stdout.\n')
+    stream.write('printing the prompt-ready output to stdout.\n\n')
+    stream.write('  --no-preamble   omit the NL++ SPECIFICATION instruction preamble\n')
     return file ? 0 : 1
   }
 
@@ -41,7 +45,7 @@ async function main(argv: string[]): Promise<number> {
 
   try {
     const language = await initParser()
-    const { output, warnings } = await preprocess(language, entryText, entryPath, resolver)
+    const { output, warnings } = await preprocess(language, entryText, entryPath, resolver, { preamble })
     for (const w of warnings) {
       process.stderr.write(
         `nlpp-compile: warning: ${w.kind}: "${w.keyword}" at line ${w.range.start.line + 1}\n`,

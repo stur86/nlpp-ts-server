@@ -108,6 +108,44 @@ test('glossary includes defined terms', async () => {
   expect(result.output).toContain('DDD aggregate root')
 })
 
+test('prepends the specification preamble', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver)
+  expect(result.output.startsWith('NL++ SPECIFICATION')).toBe(true)
+})
+
+test('preamble instructs to infer the target language and ask when ambiguous', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver)
+  expect(result.output).toContain('no programming language is fixed here')
+  expect(result.output).toContain('surrounding codebase')
+})
+
+test('preamble instructs to check for reuse of existing declarations', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver)
+  expect(result.output).toContain('Reuse vs. new declaration')
+  expect(result.output).toContain('already resolve to things declared')
+})
+
+test('preamble is present even for a file with no glossary terms', async () => {
+  // A bare prose block yields no keyword/defined-term glossary, but the
+  // preamble must still frame the output.
+  const proseOnly = `/?\n  just prose\n?/\n`
+  const result = await preprocess(language, proseOnly, '/entry.nlpp', noopResolver)
+  expect(result.output.startsWith('NL++ SPECIFICATION')).toBe(true)
+})
+
+test('preamble is on by default when no options are passed', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver)
+  expect(result.output).toContain('NL++ SPECIFICATION')
+})
+
+test('preamble can be disabled with { preamble: false }', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver, { preamble: false })
+  expect(result.output).not.toContain('NL++ SPECIFICATION')
+  // The pseudocode and glossary are still produced.
+  expect(result.output).toContain('class OrderService')
+  expect(result.output).toContain('KEYWORD GLOSSARY')
+})
+
 test('inlines imported file content', async () => {
   const resolver = async (path: string) => {
     if (path.endsWith('defs.nlpp')) return DEFS_CONTENT

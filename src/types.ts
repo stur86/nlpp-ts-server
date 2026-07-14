@@ -77,3 +77,12 @@ export type PreprocessResult = {
   output: string
   warnings: PreprocessWarning[]
 }
+
+export type PreprocessOptions = {
+  /**
+   * Prepend the fixed `NL++ SPECIFICATION` instruction preamble to the output.
+   * Defaults to `true`. Set to `false` to emit only the resolved pseudocode and
+   * keyword glossary (e.g. when the caller supplies its own framing).
+   */
+  preamble?: boolean
+}

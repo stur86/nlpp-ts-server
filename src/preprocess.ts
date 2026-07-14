@@ -1,7 +1,36 @@
-import type { Language, FileResolver, PreprocessResult, PreprocessWarning, SyntaxNode } from './types.ts'
+import type { Language, FileResolver, PreprocessResult, PreprocessOptions, PreprocessWarning, SyntaxNode } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
 import { nodeToRange, extractImportPath } from './utils.ts'
 import { parse } from './parser.ts'
+
+/**
+ * Fixed instruction block prepended to every compiled prompt. Frames the
+ * resolved pseudocode as a specification and pins down the two things NL++
+ * deliberately leaves open — target language and reuse-vs-new — with an
+ * explicit instruction to ask rather than guess when either is ambiguous.
+ */
+const PREAMBLE = [
+  'NL++ SPECIFICATION',
+  'The following is resolved NL++ pseudocode describing software architecture and',
+  'implementation intent. It is a specification for you to implement, not code to run.',
+  'Interpret it faithfully; treat prose blocks and the keyword glossary as authoritative intent.',
+  '',
+  'Two things are intentionally left unspecified. Resolve them from context, and ask',
+  'instead of guessing whenever the answer is unclear:',
+  '',
+  '- Target language: no programming language is fixed here. Infer it from the conventions',
+  '  of the surrounding codebase. If there is no surrounding codebase, or the choice is',
+  '  genuinely ambiguous, ask before writing any code.',
+  '- Reuse vs. new declaration: when working inside an existing codebase, check whether the',
+  '  entities this pseudocode names or references already resolve to things declared',
+  '  elsewhere. Where reusing an existing declaration matches the author\'s intent, reuse it',
+  '  instead of creating a duplicate; where it is ambiguous whether a reference means an',
+  '  existing entity or a new one, ask rather than assuming.',
+  '',
+  '---',
+  '',
+  '',
+].join('\n')
 
 /** Serialize a node back to text, stripping line_comment and block_comment nodes. */
 function serializeStrippingComments(node: SyntaxNode, originalText: string): string {
@@ -65,10 +94,14 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
  * Produce a single prompt-ready string from an entry NL++ file.
  *
  * Processing steps:
- * 1. Resolves `import` statements recursively via `resolveFile`, deduplicating on path.
- * 2. Strips `//` line comments and block comments.
- * 3. Retains prose blocks (`/? … ?/`) and fill-in markers (`???`) verbatim.
- * 4. Appends a `KEYWORD GLOSSARY` section listing every built-in keyword and
+ * 1. Prepends a fixed `NL++ SPECIFICATION` preamble instructing the agent to
+ *    infer the target language from the surrounding codebase and to reuse
+ *    already-declared entities where intended — asking when either is ambiguous.
+ *    Can be disabled via `options.preamble = false`.
+ * 2. Resolves `import` statements recursively via `resolveFile`, deduplicating on path.
+ * 3. Strips `//` line comments and block comments.
+ * 4. Retains prose blocks (`/? … ?/`) and fill-in markers (`???`) verbatim.
+ * 5. Appends a `KEYWORD GLOSSARY` section listing every built-in keyword and
  *    `define`d term that appears in the output, with their definitions.
  *
  * Unresolved custom block keywords (used but not `define`d) are reported as
@@ -81,9 +114,11 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
  *   relative `import` paths.
  * @param resolveFile - Async callback that receives an absolute path and
  *   returns the file's text content.
+ * @param options - Optional {@link PreprocessOptions}. By default the
+ *   `NL++ SPECIFICATION` preamble is prepended; pass `{ preamble: false }` to omit it.
  * @throws {@link ImportError} if a file cannot be resolved.
  * @throws `CircularImportError` if a cycle is detected in the import graph.
- * 
+ *
  * @category Core API
  */
 export async function preprocess(
@@ -91,6 +126,7 @@ export async function preprocess(
   entryText: string,
   entryPath: string,
   resolveFile: FileResolver,
+  options: PreprocessOptions = {},
 ): Promise<PreprocessResult> {
   const visited = new Set<string>()
   const warnings: PreprocessWarning[] = []
@@ -181,5 +217,7 @@ export async function preprocess(
       ].join('\n')
     : ''
 
-  return { output: content + glossary, warnings }
+  const preamble = (options.preamble ?? true) ? PREAMBLE : ''
+
+  return { output: preamble + content + glossary, warnings }
 }
