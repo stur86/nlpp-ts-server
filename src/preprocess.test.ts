@@ -125,6 +125,14 @@ test('preamble instructs to check for reuse of existing declarations', async () 
   expect(result.output).toContain('already resolve to things declared')
 })
 
+test('preamble explains the & reference and [] template type notations', async () => {
+  const result = await preprocess(language, SIMPLE, '/entry.nlpp', noopResolver)
+  expect(result.output).toContain('`&T` denotes a reference')
+  expect(result.output).toContain('templated/parameterized type')
+  expect(result.output).toContain('an integer')
+  expect(result.output).toContain('advisory')
+})
+
 test('preamble is present even for a file with no glossary terms', async () => {
   // A bare prose block yields no keyword/defined-term glossary, but the
   // preamble must still frame the output.
