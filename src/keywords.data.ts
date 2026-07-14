@@ -1,0 +1,25 @@
+// AUTO-GENERATED from data/keywords.yaml — do not edit by hand
+export const KEYWORD_REGISTRY: Record<string, string> = {
+  "layer": "An architectural tier. Does not correspond to a specific code construct. Use to indicate separation of concerns (e.g. domain, application, infrastructure, presentation).",
+  "module": "A cohesive grouping of related entities. May map to a package, folder, or namespace. The agent decides physical structure.",
+  "service": "A service boundary. May be internal (a bounded context) or external (a third-party API). If described as external, define an interface or client wrapper rather than an implementation.",
+  "component": "A UI or logical unit. Interpret based on surrounding architectural context.",
+  "class": "A concrete implementation type.",
+  "interface": "An abstract contract. Implement as the target language's idiomatic abstraction (interface, protocol, trait, abstract class).",
+  "enum": "A fixed set of named values.",
+  "type": "A data shape or type alias.",
+  "function": "A standalone callable, not a member of a type.",
+  "method": "A callable member. Signature is advisory — adapt parameter and return types to fit the implementation. Block body contains implementation hints, not implementation.",
+  "getter": "A read accessor. Implement as the target language's idiomatic read accessor (getter method, computed property, etc.).",
+  "setter": "A write accessor. Implement as the target language's idiomatic write accessor.",
+  "field": "A data member.",
+  "auto": "Explicit type deferral. Infer the most appropriate type from context.",
+  "uses": "A dependency or reference. At type scope: a structural dependency to inject or import. At method scope: a callable or resource involved in the implementation. Resolve the appropriate pattern from context.",
+  "implements": "This entity conforms to the named interface or contract. No implementation is inherited — provide it in full.",
+  "inherits": "This entity extends the named parent type. Take on the parent's implementation and extend or override as described.",
+  "public": "This member is part of the public interface of its parent. Apply the target language's appropriate access modifier.",
+  "private": "This member is internal to its parent. Apply the target language's appropriate access modifier.",
+  "override": "This member overrides an inherited implementation from a parent type. Apply the target language's appropriate override construct.",
+  "define": "Author-defined architectural vocabulary. Treat defined terms as first-class design concepts throughout the implementation.",
+  "import": "The contents of the referenced file have been inlined here. Treat it as part of this file."
+}

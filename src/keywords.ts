@@ -1,11 +1,7 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { load as parseYaml } from 'js-yaml'
-
-const raw = readFileSync(join(import.meta.dirname, '../data/keywords.yaml'), 'utf8')
+import { KEYWORD_REGISTRY } from './keywords.data.ts'
 
 /** Map of every built-in NL++ keyword to its definition string. */
-export const KEYWORD_REGISTRY: Record<string, string> = parseYaml(raw) as Record<string, string>
+export { KEYWORD_REGISTRY }
 
 /** @internal */
 export const KEYWORD_NAMES = new Set(Object.keys(KEYWORD_REGISTRY))
