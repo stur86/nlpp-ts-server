@@ -185,3 +185,15 @@ test('throws CircularImportError for circular imports', async () => {
   }
   await expect(preprocess(language, CIRCULAR_A, '/a.nlpp', resolver)).rejects.toBeInstanceOf(CircularImportError)
 })
+
+test('preserves reference and template type text verbatim', async () => {
+  const src = `class Store {
+  field &Array[int, 32] buffer
+  method &Order fetch(Map[string, int] q) {
+  }
+}
+`
+  const result = await preprocess(language, src, '/entry.nlpp', noopResolver)
+  expect(result.output).toContain('field &Array[int, 32] buffer')
+  expect(result.output).toContain('method &Order fetch(Map[string, int] q)')
+})

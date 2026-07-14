@@ -49,3 +49,17 @@ test('returns empty array for empty input', () => {
   const tree = parse(language, '')
   expect(getDiagnostics(language, tree)).toEqual([])
 })
+
+const REFERENCE_AND_TEMPLATE_TYPES = `class Store {
+  field &Array[int, 32] buffer
+  method &Order fetch(Map[string, Array[int]] q) {
+    /?
+      look up and return a reference
+    ?/
+  }
+}`
+
+test('accepts reference and template type syntax without diagnostics', () => {
+  const tree = parse(language, REFERENCE_AND_TEMPLATE_TYPES)
+  expect(getDiagnostics(language, tree)).toEqual([])
+})
