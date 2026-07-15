@@ -1,11 +1,12 @@
 import { readFileSync, writeFileSync } from 'fs'
-import { createRequire } from 'module'
-import path from 'path'
 import { load as parseYaml } from 'js-yaml'
+import { HIGHLIGHTS_QUERY as scm } from 'nlpp-grammar'
 
-const _require = createRequire(import.meta.url)
-const grammarDir = path.dirname(_require.resolve('nlpp-grammar/package.json'))
-const scm = readFileSync(path.join(grammarDir, 'queries', 'highlights.scm'), 'utf8')
+// nlpp-grammar's entry point hands us the query directly. Previously this
+// resolved 'nlpp-grammar/package.json' and walked to queries/highlights.scm by
+// hand — a path the grammar's `exports` map does not list, so it worked only
+// because bun's resolver ignores `exports`. Under Node it throws
+// ERR_PACKAGE_PATH_NOT_EXPORTED.
 
 const escaped = scm.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
 

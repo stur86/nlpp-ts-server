@@ -30,23 +30,39 @@ function computeNewEndPosition(startPosition: Position, newText: string): Positi
  * wasteful.
  *
  * @param wasmUrl - Optional override for the WASM file location.
- *   Omit in Node/Bun environments — the path is resolved automatically from
- *   the installed `nlpp-grammar` package.
+ *   Omit in Node/Bun environments — the path comes from the installed
+ *   `nlpp-grammar` package's `wasmPath` export.
  *   Pass a URL or path string in browser/bundler contexts where the WASM asset
- *   is served from a known URL.
+ *   is served from a known URL, or where `nlpp-grammar` is not resolvable at
+ *   runtime (a bundled vsix, for instance).
  * @throws If the WASM file cannot be located or fails to load.
  * 
  * @category Core API
  */
 export async function initParser(wasmUrl?: string | URL): Promise<Language> {
   await Parser.init()
-  let path: string
-  if (wasmUrl !== undefined) {
-    path = wasmUrl instanceof URL ? wasmUrl.pathname : wasmUrl
-  } else {
-    path = new URL(import.meta.resolve('nlpp-grammar/wasm')).pathname
+  return await WtsLanguage.load(await resolveWasm(wasmUrl))
+}
+
+/**
+ * Work out where the grammar WASM lives.
+ *
+ * The `nlpp-grammar` import is dynamic on purpose. Bundlers that inline this
+ * module (nlpp-vscode builds a self-contained vsix) would otherwise pull the
+ * grammar's entry point into the bundle and run its top-level file reads at
+ * load — against paths relative to the bundle, where nothing exists. Keeping it
+ * lazy means the import only happens when no override was given, which is
+ * exactly the case those bundles never hit: they pass an explicit path.
+ */
+async function resolveWasm(wasmUrl?: string | URL): Promise<string> {
+  if (wasmUrl === undefined) {
+    const { wasmPath } = await import('nlpp-grammar')
+    return wasmPath
   }
-  return await WtsLanguage.load(path)
+  if (typeof wasmUrl === 'string') return wasmUrl
+  // Keep the full href for http(s): taking `.pathname` would silently drop the
+  // origin and break a WASM served from another host.
+  return wasmUrl.protocol === 'file:' ? decodeURIComponent(wasmUrl.pathname) : wasmUrl.href
 }
 
 /**
