@@ -17,50 +17,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout nlpp-ts-server
-        uses: actions/checkout@v4
-        with:
-          path: nlpp-ts-server
-
-      - name: Checkout nlpp-grammar
-        uses: actions/checkout@v4
-        with:
-          repository: stur86/nlpp-grammar
-          path: nlpp-grammar
+      - uses: actions/checkout@v4
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install nlpp-grammar dependencies
-        working-directory: nlpp-grammar
+      # nlpp-grammar is a normal registry dependency (^1.0.1) — a plain install
+      # pulls the published grammar (WASM included); nothing is linked from source.
+      - name: Install dependencies
         run: bun install
-
-      - name: Build nlpp-grammar WASM
-        working-directory: nlpp-grammar
-        run: bunx tree-sitter build --wasm
-
-      - name: Register nlpp-grammar with bun link
-        working-directory: nlpp-grammar
-        run: bun link
-
-      - name: Install nlpp-ts-server dependencies
-        working-directory: nlpp-ts-server
-        run: bun install
-
-      - name: Link nlpp-grammar
-        working-directory: nlpp-ts-server
-        run: bun link nlpp-grammar
 
       - name: Build docs
-        working-directory: nlpp-ts-server
         run: bun run docs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: nlpp-ts-server/docs/api
+          path: docs/api
 
   deploy:
     needs: build

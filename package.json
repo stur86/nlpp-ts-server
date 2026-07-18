@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "nlpp-compile": "./dist/src/cli.js"
+    "nlpp-compile": "dist/src/cli.js"
   },
   "exports": {
     ".": {
@@ -15,11 +15,10 @@
     }
   },
   "files": [
-    "dist/",
-    "data/keywords.yaml"
+    "dist/"
   ],
   "scripts": {
-    "build": "bun run scripts/codegen.ts && tsup",
+    "build": "rm -rf dist && bun run scripts/codegen.ts && bun build index.ts src/cli.ts --outdir dist --target node --format esm --external web-tree-sitter --external nlpp-grammar --external js-yaml && tsc -p tsconfig.build.json",
     "prepare": "bun run scripts/codegen.ts && bun build index.ts src/cli.ts --outdir dist --target node --format esm --external web-tree-sitter --external nlpp-grammar --external js-yaml",
     "test": "bun test",
     "prepublishOnly": "bun test && bun run build",
@@ -45,15 +44,15 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
-    "tsup": "^8.5.1",
-    "typedoc": "^0.28.19"
+    "typedoc": "^0.28.19",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
     "js-yaml": "^4.1.1",
-    "nlpp-grammar": "^1.0.0",
+    "nlpp-grammar": "^1.0.1",
     "web-tree-sitter": "^0.25.0"
   }
 }

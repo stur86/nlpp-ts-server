@@ -7,17 +7,12 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout nlpp-ts-server
-        uses: actions/checkout@v4
-        with:
-          path: nlpp-ts-server
+    permissions:
+      contents: read
+      id-token: write   # npm trusted publishing (OIDC) + provenance
 
-      - name: Checkout nlpp-grammar
-        uses: actions/checkout@v4
-        with:
-          repository: stur86/nlpp-grammar
-          path: nlpp-grammar
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -27,39 +22,26 @@ jobs:
       - name: Set up Node for npm publish
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install nlpp-grammar dependencies
-        working-directory: nlpp-grammar
+      # setup-node ships npm 10.x; trusted publishing (OIDC) needs >= 11.5.1.
+      # Without this the publish fails on auth in a way that looks nothing like
+      # a version problem.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
+
+      # nlpp-grammar is a normal registry dependency (^1.0.1), so a plain install
+      # pulls the published grammar (WASM included). Nothing is built or linked
+      # from the grammar's source here.
+      - name: Install dependencies
         run: bun install
 
-      - name: Build nlpp-grammar WASM
-        working-directory: nlpp-grammar
-        run: bunx tree-sitter build --wasm
-
-      - name: Register nlpp-grammar with bun link
-        working-directory: nlpp-grammar
-        run: bun link
-
-      - name: Install nlpp-ts-server dependencies
-        working-directory: nlpp-ts-server
-        run: bun install
-
-      - name: Link nlpp-grammar
-        working-directory: nlpp-ts-server
-        run: bun link nlpp-grammar
-
-      - name: Run tests
-        working-directory: nlpp-ts-server
+      - name: Test
         run: bun test
 
       - name: Build
-        working-directory: nlpp-ts-server
         run: bun run build
 
       - name: Publish to npm
-        working-directory: nlpp-ts-server
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
