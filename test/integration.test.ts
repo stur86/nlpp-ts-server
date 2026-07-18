@@ -9,7 +9,7 @@ beforeAll(async () => {
   language = await initParser()
 })
 
-const EXAMPLE_PATH = new URL('../../nlpp-grammar/examples/class.nlpp', import.meta.url).pathname
+const EXAMPLE_PATH = new URL('../examples/ecommerce.nlpp', import.meta.url).pathname
 
 test('full pipeline: initParser → parse → getDiagnostics on example file', () => {
   const src = readFileSync(EXAMPLE_PATH, 'utf8')
