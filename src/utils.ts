@@ -71,11 +71,17 @@ export function resolveImportTarget(
   return resolved
 }
 
+/** Free every tree returned by {@link resolveImports}. */
+export function deleteTrees(trees: Map<string, Tree>): void {
+  for (const tree of trees.values()) tree.delete()
+}
+
 /**
  * Parse every file reachable through `import`s from `tree`.
  *
  * Imports that are invalid or fail to resolve are skipped silently — this
- * powers best-effort editor features, not compilation.
+ * powers best-effort editor features, not compilation. The returned trees
+ * live in WASM memory: free them with {@link deleteTrees}.
  *
  * @param currentPath - Path of the document `tree` was parsed from. Relative
  *   imports are resolved against its directory.

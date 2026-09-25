@@ -1,6 +1,6 @@
 import type { Language, Tree, Position, FileResolver, Location, SyntaxNode } from './types.ts'
 import { RESERVED_KEYWORDS } from './keywords.ts'
-import { nodeAtPosition, nodeToRange, resolveImports } from './utils.ts'
+import { nodeAtPosition, nodeToRange, resolveImports, deleteTrees } from './utils.ts'
 
 function findDefineNode(tree: Tree, name: string): SyntaxNode | null {
   for (const node of tree.rootNode.children) {
@@ -88,9 +88,13 @@ export async function getDefinition(
   // Cross-file
   if (resolveFile && documentPath) {
     const imported = await resolveImports(tree, language, documentPath, resolveFile)
-    for (const [uri, importedTree] of imported) {
-      const d = findDefineNode(importedTree, word) ?? findBlockDeclaration(importedTree, word)
-      if (d) return { uri, range: nodeToRange(d) }
+    try {
+      for (const [uri, importedTree] of imported) {
+        const d = findDefineNode(importedTree, word) ?? findBlockDeclaration(importedTree, word)
+        if (d) return { uri, range: nodeToRange(d) }
+      }
+    } finally {
+      deleteTrees(imported)
     }
   }
 

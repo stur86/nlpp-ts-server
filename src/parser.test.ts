@@ -90,3 +90,26 @@ test('parseIncremental: does not mutate oldTree', () => {
   parseIncremental(language, original, 'class Foo {}', tree, edit)
   expect(tree.rootNode.endIndex).toBe(originalEndIndex)  // still 15
 })
+
+test('parseIncremental leaves oldTree valid and unchanged', () => {
+  const oldText = 'class Foo {}\n'
+  const oldTree = parse(language, oldText)
+  const before = oldTree.rootNode.toString()
+  const newText = 'class Bar {}\n'
+  const edit = { range: { start: { line: 0, character: 6 }, end: { line: 0, character: 9 } }, text: 'Bar' }
+  const newTree = parseIncremental(language, oldText, newText, oldTree, edit)
+  expect(oldTree.rootNode.toString()).toBe(before)
+  expect(oldTree.rootNode.child(0)?.childForFieldName('name')?.text).toBe('Foo')
+  expect(newTree.rootNode.child(0)?.childForFieldName('name')?.text).toBe('Bar')
+  oldTree.delete()
+  newTree.delete()
+})
+
+test('parse can be called repeatedly and trees stay independent', () => {
+  const a = parse(language, 'class A {}\n')
+  const b = parse(language, 'service B {}\n')
+  expect(a.rootNode.child(0)?.childForFieldName('name')?.text).toBe('A')
+  expect(b.rootNode.child(0)?.childForFieldName('name')?.text).toBe('B')
+  a.delete()
+  b.delete()
+})

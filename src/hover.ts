@@ -1,6 +1,6 @@
 import type { Language, Tree, Position, FileResolver, HoverResult, SyntaxNode } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
-import { nodeAtPosition, nodeToRange, collectDefines, resolveImports } from './utils.ts'
+import { nodeAtPosition, nodeToRange, collectDefines, resolveImports, deleteTrees } from './utils.ts'
 
 function keywordAtNode(node: SyntaxNode): string | null {
   const KEYWORD_NAMED_PARENT_TYPES = new Set([
@@ -65,9 +65,13 @@ export async function getHover(
   // Cross-file define
   if (resolveFile && documentPath) {
     const imported = await resolveImports(tree, language, documentPath, resolveFile)
-    for (const importedTree of imported.values()) {
-      const def = collectDefines(importedTree).get(node.text)
-      if (def) return { range, contents: def }
+    try {
+      for (const importedTree of imported.values()) {
+        const def = collectDefines(importedTree).get(node.text)
+        if (def) return { range, contents: def }
+      }
+    } finally {
+      deleteTrees(imported)
     }
   }
 

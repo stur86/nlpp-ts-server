@@ -1,4 +1,4 @@
-import type { Language, FileResolver, PreprocessResult, PreprocessOptions, PreprocessWarning, SyntaxNode } from './types.ts'
+import type { Language, FileResolver, PreprocessResult, PreprocessOptions, PreprocessWarning, SyntaxNode, Tree } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
 import { nodeToRange, resolveImportTarget } from './utils.ts'
 import { parse } from './parser.ts'
@@ -68,6 +68,10 @@ function serializeStrippingComments(node: SyntaxNode, originalText: string): str
   return result
 }
 
+// Keywords that appear as anonymous tokens rather than their own named node.
+const TOKEN_KEYWORDS = new Set(['override', 'inherits', 'implements'])
+const MAX_TOKEN_KEYWORD_LENGTH = Math.max(...[...TOKEN_KEYWORDS].map(k => k.length))
+
 function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   if (node.type === 'object_keyword') out.add(node.text)
   else if (node.type === 'function_keyword') out.add(node.text)
@@ -76,10 +80,14 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   else if (node.type === 'define_statement') out.add('define')
   else if (node.type === 'uses_statement') out.add('uses')
   else if (node.type === 'field_statement') out.add('field')
-  if (node.text === 'override') out.add('override')
-  if (node.text === 'inherits') out.add('inherits')
-  if (node.text === 'implements') out.add('implements')
-  if (node.type === 'type' && node.text === 'auto') out.add('auto')
+  // Only read `.text` of short nodes: `.text` copies the node's source, so
+  // reading it on every node (root included) costs O(file size × depth).
+  // Checking `isNamed` keeps an identifier called e.g. `override` out.
+  const length = node.endIndex - node.startIndex
+  if (!node.isNamed && length <= MAX_TOKEN_KEYWORD_LENGTH && TOKEN_KEYWORDS.has(node.text)) {
+    out.add(node.text)
+  }
+  if (node.type === 'type' && length === 4 && node.text === 'auto') out.add('auto')
   for (const child of node.children) collectUsedBuiltins(child, out)
 }
 
@@ -139,6 +147,14 @@ export async function preprocess(
     visited.add(path)
 
     const tree = parse(language, text)
+    try {
+      return await processTree(tree, text, path, callStack)
+    } finally {
+      tree.delete()
+    }
+  }
+
+  async function processTree(tree: Tree, text: string, path: string, callStack: string[]): Promise<string> {
     collectUsedBuiltins(tree.rootNode, usedBuiltins)
 
     let output = ''

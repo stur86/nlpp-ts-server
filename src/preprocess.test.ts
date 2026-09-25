@@ -276,3 +276,17 @@ test('relative entry paths work with the default root', async () => {
   expect(result.output).toContain('define aggregate')
   await expect(preprocess(language, 'import "../x.nlpp"\n', 'entry.nlpp', resolve)).rejects.toBeInstanceOf(ImportError)
 })
+
+test('glossary includes override/inherits when used as keywords', async () => {
+  const src = 'class A inherits B {\n  override method foo()\n}\n'
+  const result = await preprocess(language, src, '/entry.nlpp', noopResolver)
+  expect(result.output).toMatch(/^override: /m)
+  expect(result.output).toMatch(/^inherits: /m)
+})
+
+test('an identifier named like a keyword does not add it to the glossary', async () => {
+  const src = 'class A {\n  field auto override\n}\n'
+  const result = await preprocess(language, src, '/entry.nlpp', noopResolver)
+  expect(result.output).not.toMatch(/^override: /m)
+  expect(result.output).toMatch(/^auto: /m)
+})

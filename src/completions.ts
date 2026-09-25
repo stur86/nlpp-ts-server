@@ -1,7 +1,7 @@
 import type { Language, Tree, Position, FileResolver, CompletionItem } from './types.ts'
 import { CompletionItemKind } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
-import { nodeAtPosition, isInsideNodeOfType, collectDefines, resolveImports } from './utils.ts'
+import { nodeAtPosition, isInsideNodeOfType, collectDefines, resolveImports, deleteTrees } from './utils.ts'
 
 /**
  * Return completion items appropriate for the cursor position.
@@ -52,12 +52,16 @@ export async function getCompletions(
   // Cross-file defines
   if (resolveFile && documentPath) {
     const imported = await resolveImports(tree, language, documentPath, resolveFile)
-    for (const importedTree of imported.values()) {
-      for (const [label, detail] of collectDefines(importedTree)) {
-        if (!inFileDefines.has(label)) {
-          items.push({ label, kind: CompletionItemKind.Constant, detail })
+    try {
+      for (const importedTree of imported.values()) {
+        for (const [label, detail] of collectDefines(importedTree)) {
+          if (!inFileDefines.has(label)) {
+            items.push({ label, kind: CompletionItemKind.Constant, detail })
+          }
         }
       }
+    } finally {
+      deleteTrees(imported)
     }
   }
 
