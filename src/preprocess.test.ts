@@ -290,3 +290,16 @@ test('an identifier named like a keyword does not add it to the glossary', async
   expect(result.output).not.toMatch(/^override: /m)
   expect(result.output).toMatch(/^auto: /m)
 })
+
+test('auto is glossed for reference and templated auto types', async () => {
+  for (const src of ['function &auto foo()\n', 'class A {\n  field auto[int] xs\n}\n']) {
+    const result = await preprocess(language, src, '/entry.nlpp', noopResolver)
+    expect(result.output).toMatch(/^auto: /m)
+  }
+})
+
+test('an identifier named inherits does not add the keyword', async () => {
+  const src = 'class A {\n  field int inherits\n}\n'
+  const result = await preprocess(language, src, '/entry.nlpp', noopResolver)
+  expect(result.output).not.toMatch(/^inherits: /m)
+})

@@ -68,9 +68,11 @@ function serializeStrippingComments(node: SyntaxNode, originalText: string): str
   return result
 }
 
-// Keywords that appear as anonymous tokens rather than their own named node.
-const TOKEN_KEYWORDS = new Set(['override', 'inherits', 'implements'])
-const MAX_TOKEN_KEYWORD_LENGTH = Math.max(...[...TOKEN_KEYWORDS].map(k => k.length))
+// Keywords that the grammar emits only as anonymous tokens, not as their own
+// named node: `override` (in `modifiers`), `inherits`/`implements` (in
+// `header_relation`) and `auto` (in `type`, including `&auto` and `auto[…]`).
+// For an anonymous node, `type` is the literal token text.
+const TOKEN_KEYWORDS = new Set(['override', 'inherits', 'implements', 'auto'])
 
 function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   if (node.type === 'object_keyword') out.add(node.text)
@@ -80,14 +82,10 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   else if (node.type === 'define_statement') out.add('define')
   else if (node.type === 'uses_statement') out.add('uses')
   else if (node.type === 'field_statement') out.add('field')
-  // Only read `.text` of short nodes: `.text` copies the node's source, so
-  // reading it on every node (root included) costs O(file size × depth).
-  // Checking `isNamed` keeps an identifier called e.g. `override` out.
-  const length = node.endIndex - node.startIndex
-  if (!node.isNamed && length <= MAX_TOKEN_KEYWORD_LENGTH && TOKEN_KEYWORDS.has(node.text)) {
-    out.add(node.text)
-  }
-  if (node.type === 'type' && length === 4 && node.text === 'auto') out.add('auto')
+  // Match on the token type rather than `.text`: `.text` copies the node's
+  // source, so reading it on every node cost O(file size × depth), and it also
+  // matched identifiers that happen to be named `override`, `inherits`, ….
+  else if (!node.isNamed && TOKEN_KEYWORDS.has(node.type)) out.add(node.type)
   for (const child of node.children) collectUsedBuiltins(child, out)
 }
 
