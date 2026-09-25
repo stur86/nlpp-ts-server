@@ -44,11 +44,11 @@ test('resolves define from imported file', async () => {
   const src = 'import "./defs.nlpp"\nsaga MySaga {}'
   const tree = parse(language, src)
   const resolver = async (path: string) => {
-    if (path.endsWith('defs.nlpp')) return 'define saga "A long-running process."\n'
+    if (path === '/project/defs.nlpp') return 'define saga "A long-running process."\n'
     throw new Error('not found')
   }
-  const loc = await getDefinition(language, tree, { line: 1, character: 0 }, resolver)
+  const loc = await getDefinition(language, tree, { line: 1, character: 0 }, resolver, '/project/main.nlpp')
   expect(loc).not.toBeNull()
-  expect(loc!.uri).toMatch(/defs\.nlpp$/)
+  expect(loc!.uri).toBe('/project/defs.nlpp')
   expect(loc!.range.start.line).toBe(0)
 })

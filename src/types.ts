@@ -85,4 +85,12 @@ export type PreprocessOptions = {
    * keyword glossary (e.g. when the caller supplies its own framing).
    */
   preamble?: boolean
+  /**
+   * Directory that imports must stay inside. Any import resolving outside it
+   * throws {@link ImportError}. Defaults to the directory of the entry file.
+   * Pass `null` to disable the check (only do this for trusted input: the
+   * compiled prompt is typically sent to a third-party LLM, so an untrusted
+   * file could otherwise pull arbitrary local `.nlpp` files into it).
+   */
+  root?: string | null
 }

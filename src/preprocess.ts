@@ -1,7 +1,11 @@
 import type { Language, FileResolver, PreprocessResult, PreprocessOptions, PreprocessWarning, SyntaxNode } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
-import { nodeToRange, extractImportPath } from './utils.ts'
+import { nodeToRange, resolveImportTarget } from './utils.ts'
 import { parse } from './parser.ts'
+import { ImportError, CircularImportError } from './errors.ts'
+import { dirnamePath, normalizePath } from './paths.ts'
+
+export { ImportError, CircularImportError }
 
 /**
  * Fixed instruction block prepended to every compiled prompt. Frames the
@@ -64,25 +68,6 @@ function serializeStrippingComments(node: SyntaxNode, originalText: string): str
   return result
 }
 
-/** Thrown by {@link preprocess} when an imported file cannot be resolved. */
-export class ImportError extends Error {
-  constructor(public readonly importPath: string, cause: unknown) {
-    super(`Cannot resolve import "${importPath}": ${cause}`)
-    this.name = 'ImportError'
-  }
-}
-
-/**
- * Thrown by {@link preprocess} when a cycle is detected in the import graph.
- * @internal
- */
-export class CircularImportError extends Error {
-  constructor(public readonly importPath: string, public readonly importStack: string[]) {
-    super(`Circular import detected: ${[...importStack, importPath].join(' → ')}`)
-    this.name = 'CircularImportError'
-  }
-}
-
 function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   if (node.type === 'object_keyword') out.add(node.text)
   else if (node.type === 'function_keyword') out.add(node.text)
@@ -106,7 +91,9 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
  *    infer the target language from the surrounding codebase and to reuse
  *    already-declared entities where intended — asking when either is ambiguous.
  *    Can be disabled via `options.preamble = false`.
- * 2. Resolves `import` statements recursively via `resolveFile`, deduplicating on path.
+ * 2. Resolves `import` statements recursively via `resolveFile`, deduplicating on
+ *    normalised path. Only `.nlpp` files can be imported, and imports must stay
+ *    inside `options.root` (by default, the entry file's directory).
  * 3. Strips `//` line comments and block comments.
  * 4. Retains prose blocks (`/? … ?/`) and fill-in markers (`???`) verbatim.
  * 5. Appends a `KEYWORD GLOSSARY` section listing every built-in keyword and
@@ -124,7 +111,8 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
  *   returns the file's text content.
  * @param options - Optional {@link PreprocessOptions}. By default the
  *   `NL++ SPECIFICATION` preamble is prepended; pass `{ preamble: false }` to omit it.
- * @throws {@link ImportError} if a file cannot be resolved.
+ * @throws {@link ImportError} if a file cannot be resolved, is not a `.nlpp`
+ *   file, or lies outside the allowed root.
  * @throws `CircularImportError` if a cycle is detected in the import graph.
  *
  * @category Core API
@@ -136,6 +124,9 @@ export async function preprocess(
   resolveFile: FileResolver,
   options: PreprocessOptions = {},
 ): Promise<PreprocessResult> {
+  const root = options.root === null
+    ? undefined
+    : normalizePath(options.root ?? dirnamePath(entryPath))
   const visited = new Set<string>()
   const warnings: PreprocessWarning[] = []
   const definedTerms = new Map<string, string>()
@@ -162,7 +153,7 @@ export async function preprocess(
       }
 
       if (node.type === 'import_statement') {
-        const importedPath = extractImportPath(node, path)
+        const importedPath = resolveImportTarget(node, path, root)
         let importedText: string
         try {
           importedText = await resolveFile(importedPath)
@@ -200,7 +191,7 @@ export async function preprocess(
     return output
   }
 
-  const content = await processFile(entryText, entryPath, [])
+  const content = await processFile(entryText, normalizePath(entryPath), [])
 
   // Build glossary — skip 'import' since import statements are stripped from output
   const glossaryLines: string[] = []

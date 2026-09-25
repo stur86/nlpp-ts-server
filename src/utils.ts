@@ -1,5 +1,7 @@
 import type { SyntaxNode, Tree, Language, Range, Position, FileResolver } from './types.ts'
 import { parse } from './parser.ts'
+import { ImportError } from './errors.ts'
+import { dirnamePath, isWithinRoot, normalizePath, resolvePath } from './paths.ts'
 
 export function nodeToRange(node: SyntaxNode): Range {
   return {
@@ -38,32 +40,67 @@ export function collectDefines(tree: Tree): Map<string, string> {
   return defines
 }
 
-export function extractImportPath(importNode: SyntaxNode, currentFilePath: string): string {
+/** Extract the raw (unquoted) path string of an `import` statement. */
+export function extractImportPath(importNode: SyntaxNode): string {
   const raw = importNode.childForFieldName('path')?.text ?? ''
-  const relative = raw.replace(/^"|"$/g, '')
-  const dir = currentFilePath.replace(/\/[^/]+$/, '')
-  return `${dir}/${relative}`.replace(/\/\.\//g, '/')
+  return raw.replace(/^"|"$/g, '')
 }
 
+/**
+ * Resolve the target of an `import` statement to a normalised absolute path.
+ *
+ * Rejects (throws {@link ImportError}) imports that do not name a `.nlpp` file
+ * and, when `root` is given, imports that resolve outside `root`. Both checks
+ * exist because the compiled prompt is usually sent to a third-party LLM: an
+ * untrusted `.nlpp` file must not be able to pull arbitrary local files
+ * (`~/.ssh/id_rsa`, `.env`, …) into it.
+ */
+export function resolveImportTarget(
+  importNode: SyntaxNode,
+  currentFilePath: string,
+  root?: string,
+): string {
+  const raw = extractImportPath(importNode)
+  if (!raw.endsWith('.nlpp')) {
+    throw new ImportError(raw, 'only .nlpp files can be imported')
+  }
+  const resolved = resolvePath(dirnamePath(currentFilePath), raw)
+  if (root !== undefined && !isWithinRoot(resolved, root)) {
+    throw new ImportError(raw, `resolves to ${resolved}, outside the allowed root ${normalizePath(root)}`)
+  }
+  return resolved
+}
+
+/**
+ * Parse every file reachable through `import`s from `tree`.
+ *
+ * Imports that are invalid or fail to resolve are skipped silently — this
+ * powers best-effort editor features, not compilation.
+ *
+ * @param currentPath - Path of the document `tree` was parsed from. Relative
+ *   imports are resolved against its directory.
+ * @param root - If given, imports resolving outside this directory are skipped.
+ */
 export async function resolveImports(
   tree: Tree,
   language: Language,
   currentPath: string,
   resolveFile: FileResolver,
-  visited = new Set<string>(),
+  root?: string,
+  visited = new Set<string>([normalizePath(currentPath)]),
 ): Promise<Map<string, Tree>> {
   const result = new Map<string, Tree>()
   for (const node of tree.rootNode.children) {
     if (!node) continue
     if (node.type !== 'import_statement') continue
-    const importedPath = extractImportPath(node, currentPath)
-    if (visited.has(importedPath)) continue
-    visited.add(importedPath)
     try {
+      const importedPath = resolveImportTarget(node, currentPath, root)
+      if (visited.has(importedPath)) continue
+      visited.add(importedPath)
       const text = await resolveFile(importedPath)
       const importedTree = parse(language, text)
       result.set(importedPath, importedTree)
-      const nested = await resolveImports(importedTree, language, importedPath, resolveFile, visited)
+      const nested = await resolveImports(importedTree, language, importedPath, resolveFile, root, visited)
       for (const [k, v] of nested) result.set(k, v)
     } catch {
       // swallow — callers that need error reporting handle it themselves

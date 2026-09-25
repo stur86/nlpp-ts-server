@@ -48,10 +48,10 @@ test('cross-file defines appear when resolveFile provided', async () => {
   const src = 'import "./defs.nlpp"\n'
   const tree = parse(language, src)
   const resolver = async (path: string) => {
-    if (path.endsWith('defs.nlpp')) return 'define saga "A long-running process."\n'
+    if (path === '/project/defs.nlpp') return 'define saga "A long-running process."\n'
     throw new Error('not found')
   }
-  const items = await getCompletions(language, tree, { line: 1, character: 0 }, resolver)
+  const items = await getCompletions(language, tree, { line: 1, character: 0 }, resolver, '/project/main.nlpp')
   const labels = items.map(i => i.label)
   expect(labels).toContain('saga')
 })

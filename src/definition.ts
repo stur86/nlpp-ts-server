@@ -56,6 +56,9 @@ function resolveWordNode(node: SyntaxNode): SyntaxNode {
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for cross-file go-to-definition.
+ * @param documentPath - Absolute path of the document `tree` was parsed from.
+ *   Relative imports are resolved against its directory. Cross-file lookup is
+ *   skipped when this is omitted.
  * 
  * @category Core API
  */
@@ -64,6 +67,7 @@ export async function getDefinition(
   tree: Tree,
   position: Position,
   resolveFile?: FileResolver,
+  documentPath?: string,
 ): Promise<Location | null> {
   const rawNode = nodeAtPosition(tree, position)
   const node = resolveWordNode(rawNode)
@@ -82,8 +86,8 @@ export async function getDefinition(
   }
 
   // Cross-file
-  if (resolveFile) {
-    const imported = await resolveImports(tree, language, '', resolveFile)
+  if (resolveFile && documentPath) {
+    const imported = await resolveImports(tree, language, documentPath, resolveFile)
     for (const [uri, importedTree] of imported) {
       const d = findDefineNode(importedTree, word) ?? findBlockDeclaration(importedTree, word)
       if (d) return { uri, range: nodeToRange(d) }

@@ -205,3 +205,74 @@ test('preserves reference and template type text verbatim', async () => {
   expect(result.output).toContain('field &Array[int, 32] buffer')
   expect(result.output).toContain('method &Order fetch(Map[string, int] q)')
 })
+
+// ---- import path safety ----
+
+function mapResolver(files: Record<string, string>) {
+  const requested: string[] = []
+  const resolve = async (path: string) => {
+    requested.push(path)
+    const text = files[path]
+    if (text === undefined) throw new Error(`ENOENT: ${path}`)
+    return text
+  }
+  return { resolve, requested }
+}
+
+test('rejects imports that are not .nlpp files, without calling the resolver', async () => {
+  const { resolve, requested } = mapResolver({})
+  const src = 'import "../../secret.txt"\n'
+  await expect(preprocess(language, src, '/proj/entry.nlpp', resolve, { root: null }))
+    .rejects.toBeInstanceOf(ImportError)
+  expect(requested).toEqual([])
+})
+
+test('rejects imports escaping the entry directory by default', async () => {
+  const { resolve, requested } = mapResolver({ '/other/x.nlpp': 'class X {}\n' })
+  await expect(preprocess(language, 'import "../other/x.nlpp"\n', '/proj/entry.nlpp', resolve))
+    .rejects.toThrow(/outside the allowed root/)
+  await expect(preprocess(language, 'import "/other/x.nlpp"\n', '/proj/entry.nlpp', resolve))
+    .rejects.toThrow(/outside the allowed root/)
+  expect(requested).toEqual([])
+})
+
+test('an explicit root allows imports from sibling directories under it', async () => {
+  const { resolve } = mapResolver({ '/proj/shared/v.nlpp': DEFS_CONTENT })
+  const result = await preprocess(language, 'import "../shared/v.nlpp"\n', '/proj/src/entry.nlpp', resolve, { root: '/proj' })
+  expect(result.output).toContain('define aggregate')
+})
+
+test('root: null disables the root check', async () => {
+  const { resolve } = mapResolver({ '/other/v.nlpp': DEFS_CONTENT })
+  const result = await preprocess(language, 'import "../other/v.nlpp"\n', '/proj/entry.nlpp', resolve, { root: null })
+  expect(result.output).toContain('define aggregate')
+})
+
+test('passes normalised absolute paths to the resolver', async () => {
+  const { resolve, requested } = mapResolver({ '/proj/lib/defs.nlpp': DEFS_CONTENT })
+  await preprocess(language, 'import "./lib/../lib/./defs.nlpp"\n', '/proj/entry.nlpp', resolve)
+  expect(requested).toEqual(['/proj/lib/defs.nlpp'])
+})
+
+test('detects a self-import written through ..', async () => {
+  const { resolve } = mapResolver({
+    '/proj/sub/b.nlpp': 'import "../sub/b.nlpp"\nclass B {}\n',
+  })
+  await expect(preprocess(language, 'import "sub/b.nlpp"\n', '/proj/entry.nlpp', resolve))
+    .rejects.toBeInstanceOf(CircularImportError)
+})
+
+test('resolves Windows-style entry paths', async () => {
+  const { resolve, requested } = mapResolver({ 'C:/proj/defs.nlpp': DEFS_CONTENT })
+  const result = await preprocess(language, 'import "defs.nlpp"\n', 'C:\\proj\\entry.nlpp', resolve)
+  expect(requested).toEqual(['C:/proj/defs.nlpp'])
+  expect(result.output).toContain('define aggregate')
+})
+
+test('relative entry paths work with the default root', async () => {
+  const { resolve, requested } = mapResolver({ 'lib/defs.nlpp': DEFS_CONTENT })
+  const result = await preprocess(language, 'import "lib/defs.nlpp"\n', 'entry.nlpp', resolve)
+  expect(requested).toEqual(['lib/defs.nlpp'])
+  expect(result.output).toContain('define aggregate')
+  await expect(preprocess(language, 'import "../x.nlpp"\n', 'entry.nlpp', resolve)).rejects.toBeInstanceOf(ImportError)
+})

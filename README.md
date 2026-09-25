@@ -28,6 +28,7 @@ npm install nlpp-ts-server        # or: bun add nlpp-ts-server
 npx nlpp-compile path/to/entry.nlpp            # print the compiled prompt to stdout
 npx nlpp-compile entry.nlpp > prompt.txt       # redirect it to a file
 npx nlpp-compile --no-preamble entry.nlpp      # omit the NL++ specification preamble
+npx nlpp-compile --root . src/entry.nlpp       # allow imports anywhere under .
 ```
 
 The command resolves `import`s, strips comments, and appends the keyword
@@ -37,22 +38,25 @@ keywords) go to **stderr**, so stdout stays a clean, pipeable prompt.
 ## Library
 
 ```ts
-import { initParser, preprocess, getDiagnostics } from 'nlpp-ts-server'
+import { initParser, parse, preprocess, getDiagnostics } from 'nlpp-ts-server'
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 const language = await initParser()
 
 // Compile an entry file into a prompt.
-const source = await readFile('entry.nlpp', 'utf-8')
+const entryPath = resolve('entry.nlpp')
+const source = await readFile(entryPath, 'utf-8')
 const { output, warnings } = await preprocess(
   language,
   source,
-  'entry.nlpp',
+  entryPath,
   (path) => readFile(path, 'utf-8'),   // how imports are resolved
+  { root: process.cwd() },              // imports must stay inside this dir
 )
 
 // Or drive individual editor features.
-const diagnostics = getDiagnostics(language, source)
+const diagnostics = getDiagnostics(language, parse(language, source))
 ```
 
 Exported entry points include `preprocess`, `initParser`/`parse`/

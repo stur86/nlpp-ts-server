@@ -18,6 +18,9 @@ import { nodeAtPosition, isInsideNodeOfType, collectDefines, resolveImports } fr
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for cross-file define completions.
+ * @param documentPath - Absolute path of the document `tree` was parsed from.
+ *   Relative imports are resolved against its directory. Cross-file lookup is
+ *   skipped when this is omitted.
  * 
  * @category Core API
  */
@@ -26,6 +29,7 @@ export async function getCompletions(
   tree: Tree,
   position: Position,
   resolveFile?: FileResolver,
+  documentPath?: string,
 ): Promise<CompletionItem[]> {
   const node = nodeAtPosition(tree, position)
 
@@ -46,8 +50,8 @@ export async function getCompletions(
   }
 
   // Cross-file defines
-  if (resolveFile) {
-    const imported = await resolveImports(tree, language, '', resolveFile)
+  if (resolveFile && documentPath) {
+    const imported = await resolveImports(tree, language, documentPath, resolveFile)
     for (const importedTree of imported.values()) {
       for (const [label, detail] of collectDefines(importedTree)) {
         if (!inFileDefines.has(label)) {

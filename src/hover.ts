@@ -36,6 +36,9 @@ function keywordAtNode(node: SyntaxNode): string | null {
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for hover on cross-file defined terms.
+ * @param documentPath - Absolute path of the document `tree` was parsed from.
+ *   Relative imports are resolved against its directory. Cross-file lookup is
+ *   skipped when this is omitted.
  * 
  * @category Core API
  */
@@ -44,6 +47,7 @@ export async function getHover(
   tree: Tree,
   position: Position,
   resolveFile?: FileResolver,
+  documentPath?: string,
 ): Promise<HoverResult | null> {
   const node = nodeAtPosition(tree, position)
   const range = nodeToRange(node)
@@ -59,8 +63,8 @@ export async function getHover(
   if (inFileDef) return { range, contents: inFileDef }
 
   // Cross-file define
-  if (resolveFile) {
-    const imported = await resolveImports(tree, language, '', resolveFile)
+  if (resolveFile && documentPath) {
+    const imported = await resolveImports(tree, language, documentPath, resolveFile)
     for (const importedTree of imported.values()) {
       const def = collectDefines(importedTree).get(node.text)
       if (def) return { range, contents: def }
