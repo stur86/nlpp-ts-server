@@ -14,7 +14,12 @@ export function nodeAtPosition(tree: Tree, position: Position): SyntaxNode {
   return tree.rootNode.descendantForPosition({
     row: position.line,
     column: position.character,
-  })
+  }) ?? tree.rootNode
+}
+
+/** A node's children without the `null` entries web-tree-sitter's typings allow. */
+export function childrenOf(node: SyntaxNode): SyntaxNode[] {
+  return node.children.filter((c): c is SyntaxNode => c !== null)
 }
 
 export function isInsideNodeOfType(node: SyntaxNode, type: string): boolean {
@@ -34,7 +39,7 @@ export function collectDefines(tree: Tree): Map<string, string> {
       const body = node.childForFieldName('definition')?.text?.replace(/^"|"$/g, '') ?? ''
       if (name) defines.set(name, body)
     }
-    for (const child of node.children) walk(child)
+    for (const child of childrenOf(node)) walk(child)
   }
   walk(tree.rootNode)
   return defines

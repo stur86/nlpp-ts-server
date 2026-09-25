@@ -1,6 +1,6 @@
 import type { Language, Tree, SyntaxNode, Diagnostic } from './types.ts'
 import { DiagnosticSeverity } from './types.ts'
-import { nodeToRange } from './utils.ts'
+import { nodeToRange, childrenOf } from './utils.ts'
 
 /**
  * Walk a syntax tree and return all parse errors as {@link Diagnostic} objects.
@@ -33,7 +33,7 @@ export function getDiagnostics(_language: Language, tree: Tree): Diagnostic[] {
         severity: DiagnosticSeverity.Error,
       })
     } else {
-      for (const child of node.children) walk(child)
+      for (const child of childrenOf(node)) walk(child)
     }
   }
 

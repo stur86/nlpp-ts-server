@@ -1,6 +1,6 @@
 import type { Language, Tree, Position, FileResolver, Location, SyntaxNode } from './types.ts'
 import { RESERVED_KEYWORDS } from './keywords.ts'
-import { nodeAtPosition, nodeToRange, resolveImports, deleteTrees } from './utils.ts'
+import { nodeAtPosition, nodeToRange, resolveImports, deleteTrees, childrenOf } from './utils.ts'
 
 function findDefineNode(tree: Tree, name: string): SyntaxNode | null {
   for (const node of tree.rootNode.children) {
@@ -16,7 +16,7 @@ function findBlockDeclaration(tree: Tree, name: string): SyntaxNode | null {
     for (const type of ['object_block', 'function_block', 'custom_block']) {
       if (node.type === type && node.childForFieldName('name')?.text === name) return node
     }
-    for (const child of node.children) {
+    for (const child of childrenOf(node)) {
       const found = walk(child)
       if (found) return found
     }

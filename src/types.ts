@@ -1,9 +1,9 @@
-import type Parser from 'web-tree-sitter'
+import type { Language as WtsLanguage, Tree as WtsTree, Node as WtsNode } from 'web-tree-sitter'
 
-export type Language = Parser.Language
-export type Tree = Parser.Tree
-// @ts-ignore(2694)
-export type SyntaxNode = Parser.SyntaxNode  
+export type Language = WtsLanguage
+export type Tree = WtsTree
+/** A node in a syntax tree (web-tree-sitter's `Node`; `SyntaxNode` before 0.25). */
+export type SyntaxNode = WtsNode
 export type FileResolver = (path: string) => Promise<string>
 
 export type Position = { line: number; character: number }

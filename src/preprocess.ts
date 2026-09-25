@@ -1,6 +1,6 @@
 import type { Language, FileResolver, PreprocessResult, PreprocessOptions, PreprocessWarning, SyntaxNode, Tree } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
-import { nodeToRange, resolveImportTarget } from './utils.ts'
+import { nodeToRange, resolveImportTarget, childrenOf } from './utils.ts'
 import { parse } from './parser.ts'
 import { ImportError, CircularImportError } from './errors.ts'
 import { dirnamePath, normalizePath } from './paths.ts'
@@ -52,7 +52,7 @@ function serializeStrippingComments(node: SyntaxNode, originalText: string): str
   }
   let result = ''
   let cursor = node.startIndex
-  for (const child of node.children) {
+  for (const child of childrenOf(node)) {
     if (child.type === 'line_comment' || child.type === 'block_comment') {
       // skip — also skip trailing whitespace/newline after comment if any
       cursor = child.endIndex
@@ -86,7 +86,7 @@ function collectUsedBuiltins(node: SyntaxNode, out: Set<string>): void {
   // source, so reading it on every node cost O(file size × depth), and it also
   // matched identifiers that happen to be named `override`, `inherits`, ….
   else if (!node.isNamed && TOKEN_KEYWORDS.has(node.type)) out.add(node.type)
-  for (const child of node.children) collectUsedBuiltins(child, out)
+  for (const child of childrenOf(node)) collectUsedBuiltins(child, out)
 }
 
 /**
