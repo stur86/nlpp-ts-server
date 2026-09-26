@@ -1,6 +1,6 @@
 import type { Language, Tree, Position, FileResolver, HoverResult, SyntaxNode } from './types.ts'
 import { KEYWORD_REGISTRY } from './keywords.ts'
-import { nodeAtPosition, nodeToRange, collectDefines, resolveImports } from './utils.ts'
+import { nodeAtPosition, nodeToRange, collectDefines, resolveImports, deleteTrees } from './utils.ts'
 
 function keywordAtNode(node: SyntaxNode): string | null {
   const KEYWORD_NAMED_PARENT_TYPES = new Set([
@@ -36,6 +36,9 @@ function keywordAtNode(node: SyntaxNode): string | null {
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for hover on cross-file defined terms.
+ * @param documentPath - Absolute path of the document `tree` was parsed from.
+ *   Relative imports are resolved against its directory. Cross-file lookup is
+ *   skipped when this is omitted.
  * 
  * @category Core API
  */
@@ -44,6 +47,7 @@ export async function getHover(
   tree: Tree,
   position: Position,
   resolveFile?: FileResolver,
+  documentPath?: string,
 ): Promise<HoverResult | null> {
   const node = nodeAtPosition(tree, position)
   const range = nodeToRange(node)
@@ -59,11 +63,15 @@ export async function getHover(
   if (inFileDef) return { range, contents: inFileDef }
 
   // Cross-file define
-  if (resolveFile) {
-    const imported = await resolveImports(tree, language, '', resolveFile)
-    for (const importedTree of imported.values()) {
-      const def = collectDefines(importedTree).get(node.text)
-      if (def) return { range, contents: def }
+  if (resolveFile && documentPath) {
+    const imported = await resolveImports(tree, language, documentPath, resolveFile)
+    try {
+      for (const importedTree of imported.values()) {
+        const def = collectDefines(importedTree).get(node.text)
+        if (def) return { range, contents: def }
+      }
+    } finally {
+      deleteTrees(imported)
     }
   }
 

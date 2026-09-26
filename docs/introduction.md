@@ -75,7 +75,7 @@ Functions that resolve cross-file symbols (`getCompletions`, `getHover`, `getDef
 type FileResolver = (path: string) => Promise<string>
 ```
 
-The callback receives an absolute path and should return the file's text content. Keeping I/O out of the library makes it runtime-agnostic — the same code runs in Bun, Node.js, and bundler environments.
+The callback receives a normalised absolute path (always `/`-separated, even on Windows) and should return the file's text content. Only imports of `.nlpp` files are ever passed to it. Keeping I/O out of the library makes it runtime-agnostic — the same code runs in Bun, Node.js, and bundler environments.
 
 **Bun / Node.js example:**
 
@@ -92,7 +92,13 @@ const resolveFile: FileResolver = (path) =>
   fetch(`/api/files?path=${encodeURIComponent(path)}`).then(r => r.text())
 ```
 
-When `resolveFile` is omitted, cross-file features degrade gracefully — in-file results are still returned.
+The editor features (`getCompletions`, `getHover`, `getDefinition`) also take the absolute path of the current document as a final `documentPath` argument; relative imports are resolved against its directory:
+
+```ts
+const hover = await getHover(language, tree, position, resolveFile, '/abs/path/to/doc.nlpp')
+```
+
+When `resolveFile` or `documentPath` is omitted, cross-file features degrade gracefully — in-file results are still returned.
 
 ---
 
@@ -118,7 +124,7 @@ const { output, warnings } = await preprocess(
 ```
 
 The preprocessor:
-1. Resolves `import` statements recursively (deduplicating on path)
+1. Resolves `import` statements recursively (deduplicating on normalised path). Only `.nlpp` files can be imported, and every import must resolve inside `options.root` — by default the entry file's directory. Pass `{ root: '/abs/project' }` to widen it, or `{ root: null }` to disable the check for trusted input. The check exists because the output is usually sent to a third-party LLM: without it, an untrusted `.nlpp` file could pull arbitrary local files into the prompt.
 2. Strips `//` line comments and block comments
 3. Retains prose blocks (`/? … ?/`) and fill-in markers (`???`) verbatim
 4. Appends a `KEYWORD GLOSSARY` with definitions for every keyword and `define`d term that appears in the output

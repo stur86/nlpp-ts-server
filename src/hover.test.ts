@@ -44,10 +44,37 @@ test('returns hover for define term from imported file', async () => {
   const src = 'import "./defs.nlpp"\nsaga MySaga {}'
   const tree = parse(language, src)
   const resolver = async (path: string) => {
-    if (path.endsWith('defs.nlpp')) return 'define saga "A long-running process coordinator."\n'
+    if (path === '/project/defs.nlpp') return 'define saga "A long-running process coordinator."\n'
     throw new Error('not found')
   }
-  const result = await getHover(language, tree, { line: 1, character: 0 }, resolver)
+  const result = await getHover(language, tree, { line: 1, character: 0 }, resolver, '/project/main.nlpp')
   expect(result).not.toBeNull()
   expect(result!.contents).toContain('long-running process')
+})
+
+test('resolves cross-file imports relative to documentPath, not the filesystem root', async () => {
+  const src = 'import "lib.nlpp"\nsaga MySaga {}'
+  const tree = parse(language, src)
+  const requested: string[] = []
+  const resolver = async (path: string) => {
+    requested.push(path)
+    return 'define saga "A long-running process coordinator."\n'
+  }
+  await getHover(language, tree, { line: 1, character: 0 }, resolver, '/home/u/proj/main.nlpp')
+  expect(requested).toEqual(['/home/u/proj/lib.nlpp'])
+})
+
+test('skips cross-file lookup when documentPath is omitted', async () => {
+  const tree = parse(language, 'import "lib.nlpp"\nsaga MySaga {}')
+  let called = false
+  const result = await getHover(language, tree, { line: 1, character: 0 }, async () => { called = true; return '' })
+  expect(called).toBe(false)
+  expect(result).toBeNull()
+})
+
+test('does not read non-.nlpp imports', async () => {
+  const tree = parse(language, 'import "../../.ssh/id_rsa"\nsaga MySaga {}')
+  let called = false
+  await getHover(language, tree, { line: 1, character: 0 }, async () => { called = true; return '' }, '/proj/main.nlpp')
+  expect(called).toBe(false)
 })

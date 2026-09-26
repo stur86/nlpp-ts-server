@@ -3,6 +3,22 @@ import type { Language, Tree, Position, Edit } from './types.ts'
 
 export type { Language, Tree, SyntaxNode } from './types.ts'
 
+// web-tree-sitter objects live in WASM memory that JS garbage collection never
+// reclaims — each Parser, Tree and Query must be freed with `.delete()`. One
+// Parser per Language is reused rather than allocating (and leaking) one per
+// parse. Parsing is synchronous, so sharing it is safe.
+const parsers = new WeakMap<Language, Parser>()
+
+function parserFor(language: Language): Parser {
+  let parser = parsers.get(language)
+  if (!parser) {
+    parser = new Parser()
+    parser.setLanguage(language)
+    parsers.set(language, parser)
+  }
+  return parser
+}
+
 function charOffsetAt(text: string, position: Position): number {
   let offset = 0
   for (let i = 0; i < position.line; i++) {
@@ -72,15 +88,17 @@ async function resolveWasm(wasmUrl?: string | URL): Promise<string> {
  * Syntax errors are represented as `ERROR` and `MISSING` nodes in the tree,
  * which {@link getDiagnostics} converts to {@link Diagnostic} objects.
  *
+ * The caller owns the returned tree. It lives in WASM memory that is not
+ * garbage-collected: call `tree.delete()` once it is no longer needed, or a
+ * long-running process (e.g. a language server) will leak memory.
+ *
  * @param language - The `Language` object returned by {@link initParser}.
  * @param text - Full document text.
  * 
  * @category Core API
  */
 export function parse(language: Language, text: string): Tree {
-  const parser = new Parser()
-  parser.setLanguage(language)
-  return parser.parse(text) as Tree
+  return parserFor(language).parse(text) as Tree
 }
 
 /**
@@ -95,6 +113,10 @@ export function parse(language: Language, text: string): Tree {
  *
  * The `edit` type is structurally compatible with LSP `TextDocumentContentChangeEvent`
  * so LSP change events can be passed directly.
+ *
+ * `oldTree` is left untouched and still owned by the caller; the returned tree
+ * is a new object the caller must also `delete()` when done (typically
+ * right after this call, delete `oldTree` and keep the new one).
  *
  * @param language - The `Language` object returned by {@link initParser}.
  * @param oldText - Full document text before the edit.
@@ -111,23 +133,24 @@ export function parseIncremental(
   oldTree: Tree,
   edit: Edit,
 ): Tree {
-  const tree = oldTree.copy()
-
   const startIndex = charOffsetAt(oldText, edit.range.start)
   const oldEndIndex = charOffsetAt(oldText, edit.range.end)
   const newEndIndex = startIndex + edit.text.length
   const newEndPosition = computeNewEndPosition(edit.range.start, edit.text)
 
-  tree.edit({
-    startIndex,
-    oldEndIndex,
-    newEndIndex,
-    startPosition: { row: edit.range.start.line, column: edit.range.start.character },
-    oldEndPosition: { row: edit.range.end.line, column: edit.range.end.character },
-    newEndPosition: { row: newEndPosition.line, column: newEndPosition.character },
-  })
-
-  const parser = new Parser()
-  parser.setLanguage(language)
-  return parser.parse(newText, tree) as Tree
+  // Edit a copy so the caller's oldTree stays valid; free the copy afterwards.
+  const tree = oldTree.copy()
+  try {
+    tree.edit({
+      startIndex,
+      oldEndIndex,
+      newEndIndex,
+      startPosition: { row: edit.range.start.line, column: edit.range.start.character },
+      oldEndPosition: { row: edit.range.end.line, column: edit.range.end.character },
+      newEndPosition: { row: newEndPosition.line, column: newEndPosition.character },
+    })
+    return parserFor(language).parse(newText, tree) as Tree
+  } finally {
+    tree.delete()
+  }
 }

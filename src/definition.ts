@@ -1,6 +1,6 @@
 import type { Language, Tree, Position, FileResolver, Location, SyntaxNode } from './types.ts'
 import { RESERVED_KEYWORDS } from './keywords.ts'
-import { nodeAtPosition, nodeToRange, resolveImports } from './utils.ts'
+import { nodeAtPosition, nodeToRange, resolveImports, deleteTrees, childrenOf } from './utils.ts'
 
 function findDefineNode(tree: Tree, name: string): SyntaxNode | null {
   for (const node of tree.rootNode.children) {
@@ -16,7 +16,7 @@ function findBlockDeclaration(tree: Tree, name: string): SyntaxNode | null {
     for (const type of ['object_block', 'function_block', 'custom_block']) {
       if (node.type === type && node.childForFieldName('name')?.text === name) return node
     }
-    for (const child of node.children) {
+    for (const child of childrenOf(node)) {
       const found = walk(child)
       if (found) return found
     }
@@ -56,6 +56,9 @@ function resolveWordNode(node: SyntaxNode): SyntaxNode {
  * @param position - Zero-based `{ line, character }` cursor position.
  * @param resolveFile - Optional async callback that resolves an absolute file
  *   path to its text content. Required for cross-file go-to-definition.
+ * @param documentPath - Absolute path of the document `tree` was parsed from.
+ *   Relative imports are resolved against its directory. Cross-file lookup is
+ *   skipped when this is omitted.
  * 
  * @category Core API
  */
@@ -64,6 +67,7 @@ export async function getDefinition(
   tree: Tree,
   position: Position,
   resolveFile?: FileResolver,
+  documentPath?: string,
 ): Promise<Location | null> {
   const rawNode = nodeAtPosition(tree, position)
   const node = resolveWordNode(rawNode)
@@ -82,11 +86,15 @@ export async function getDefinition(
   }
 
   // Cross-file
-  if (resolveFile) {
-    const imported = await resolveImports(tree, language, '', resolveFile)
-    for (const [uri, importedTree] of imported) {
-      const d = findDefineNode(importedTree, word) ?? findBlockDeclaration(importedTree, word)
-      if (d) return { uri, range: nodeToRange(d) }
+  if (resolveFile && documentPath) {
+    const imported = await resolveImports(tree, language, documentPath, resolveFile)
+    try {
+      for (const [uri, importedTree] of imported) {
+        const d = findDefineNode(importedTree, word) ?? findBlockDeclaration(importedTree, word)
+        if (d) return { uri, range: nodeToRange(d) }
+      }
+    } finally {
+      deleteTrees(imported)
     }
   }
 

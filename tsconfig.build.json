@@ -6,9 +6,7 @@
     "declaration": true,
     "declarationMap": false,
     "outDir": "dist",
-    "rewriteRelativeImportExtensions": true,
-    "strict": false,
-    "noUncheckedIndexedAccess": false
+    "rewriteRelativeImportExtensions": true
   },
-  "files": ["index.ts", "src/cli.ts"]
+  "files": ["index.ts"]
 }

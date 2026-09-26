@@ -1,4 +1,5 @@
 import type { Tree, SyntaxNode, FoldingRange } from './types.ts'
+import { childrenOf } from './utils.ts'
 
 /**
  * Return all foldable regions in a syntax tree.
@@ -20,7 +21,7 @@ export function getFolding(tree: Tree): FoldingRange[] {
     const startLine = node.startPosition.row
     const endLine = node.endPosition.row
     if (startLine >= endLine) {
-      for (const child of node.children) walk(child)
+      for (const child of childrenOf(node)) walk(child)
       return
     }
 
@@ -30,7 +31,7 @@ export function getFolding(tree: Tree): FoldingRange[] {
       ranges.push({ startLine, endLine, kind: 'region' })
     } else if (node.type === 'body') {
       // Only fold bodies that span multiple lines and don't just contain prose blocks
-      const hasNonProseChild = node.children.some(
+      const hasNonProseChild = childrenOf(node).some(
         (c: SyntaxNode) => c.type !== 'prose_block' && c.type !== '{' && c.type !== '}'
       )
       if (hasNonProseChild) {
@@ -38,7 +39,7 @@ export function getFolding(tree: Tree): FoldingRange[] {
       }
     }
 
-    for (const child of node.children) walk(child)
+    for (const child of childrenOf(node)) walk(child)
   }
 
   walk(tree.rootNode)
